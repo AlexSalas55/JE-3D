@@ -1,5 +1,6 @@
 #include "game.h"
 #include "framework/utils.h"
+#include "framework/entities/entityMesh.h"
 #include "graphics/mesh.h"
 #include "graphics/texture.h"
 #include "graphics/fbo.h"
@@ -16,6 +17,8 @@ float angle = 0;
 float mouse_speed = 100.0f;
 
 Game* Game::instance = NULL;
+
+EntityMesh* entity_mesh = nullptr;
 
 Game::Game(int window_width, int window_height, SDL_Window* window)
 {
@@ -49,6 +52,12 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	// Example of shader loading using the shaders manager
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
 
+	Material material;
+	material.diffuse = texture;
+	material.shader = shader;
+	material.color = Vector4::RED;
+
+   entity_mesh = new EntityMesh(mesh, material);
 	// Hide the cursor
 	SDL_ShowCursor(!mouse_locked); //hide or show the mouse
 }
@@ -69,29 +78,31 @@ void Game::render(void)
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
+
+	entity_mesh->render(camera);
    
 	// Create model matrix for cube
-	Matrix44 m;
-	m.rotate(angle*DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
+	// Matrix44 m;
+	// m.rotate(angle*DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
 
-	if(shader)
-	{
-		// Enable shader
-		shader->enable();
+	// if(shader)
+	// {
+	// 	// Enable shader
+	// 	shader->enable();
 
-		// Upload uniforms
-		shader->setUniform("u_color", Vector4(1,1,1,1));
-		shader->setUniform("u_viewprojection", camera->viewprojection_matrix );
-		shader->setUniform("u_texture", texture, 0);
-		shader->setUniform("u_model", m);
-		shader->setUniform("u_time", time);
+	// 	// Upload uniforms
+	// 	shader->setUniform("u_color", Vector4(1,1,1,1));
+	// 	shader->setUniform("u_viewprojection", camera->viewprojection_matrix );
+	// 	shader->setUniform("u_texture", texture, 0);
+	// 	shader->setUniform("u_model", m);
+	// 	shader->setUniform("u_time", time);
 
-		// Do the draw call
-		mesh->render( GL_TRIANGLES );
+	// 	// Do the draw call
+	// 	mesh->render( GL_TRIANGLES );
 
-		// Disable shader
-		shader->disable();
-	}
+	// 	// Disable shader
+	// 	shader->disable();
+	// }
 
 	// Draw the floor grid
 	drawGrid();
@@ -179,11 +190,3 @@ void Game::onResize(int width, int height)
 	window_height = height;
 }
 
-void Game::setMouseLocked(bool must_lock)
-{
-	SDL_ShowCursor(!must_lock);
-
-	SDL_SetRelativeMouseMode((SDL_bool)must_lock);
-
-	mouse_locked = must_lock;
-}
