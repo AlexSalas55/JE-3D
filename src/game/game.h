@@ -7,6 +7,8 @@
 #include "framework/includes.h"
 #include "framework/camera.h"
 #include "framework/utils.h"
+#include "stage.h"
+#include <map>
 
 class Game
 {
@@ -28,6 +30,11 @@ public:
 	//some vars
 	Camera* camera; //our global camera
 	bool mouse_locked; //tells if the mouse is locked (not seen)
+
+	// Stage management
+	std::map<uint8_t, Stage*> stages;
+	Stage* current_stage;
+	void goToStage(uint8_t stage_id);
 
 	Game( int window_width, int window_height, SDL_Window* window );
 

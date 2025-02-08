@@ -6,6 +6,8 @@
 #include "graphics/fbo.h"
 #include "graphics/shader.h"
 #include "framework/input.h"
+#include "stage.h"
+#include "world.h"
 
 #include <cmath>
 
@@ -33,6 +35,18 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	time = 0.0f;
 	elapsed_time = 0.0f;
 	mouse_locked = false;
+	current_stage = nullptr;
+
+	// Stages
+	stages[STAGE_MENU] = new Stage();
+	stages[STAGE_PLAY] = new PlayStage();
+	
+	for (auto entry : stages) {
+		Stage* stage = entry.second;
+		stage->init();
+	}
+	
+	goToStage(STAGE_PLAY);
 
 	// OpenGL flags
 	glEnable( GL_CULL_FACE ); //render both sides of every triangle
@@ -62,7 +76,6 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	SDL_ShowCursor(!mouse_locked); //hide or show the mouse
 }
 
-//what to do when the image has to be draw
 void Game::render(void)
 {
 	// Set the clear color (the background color)
@@ -71,41 +84,10 @@ void Game::render(void)
 	// Clear the window and the depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Set the camera as default
-	camera->enable();
-
-	// Set flags
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-
-	entity_mesh->render(camera);
-   
-	// Create model matrix for cube
-	// Matrix44 m;
-	// m.rotate(angle*DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
-
-	// if(shader)
-	// {
-	// 	// Enable shader
-	// 	shader->enable();
-
-	// 	// Upload uniforms
-	// 	shader->setUniform("u_color", Vector4(1,1,1,1));
-	// 	shader->setUniform("u_viewprojection", camera->viewprojection_matrix );
-	// 	shader->setUniform("u_texture", texture, 0);
-	// 	shader->setUniform("u_model", m);
-	// 	shader->setUniform("u_time", time);
-
-	// 	// Do the draw call
-	// 	mesh->render( GL_TRIANGLES );
-
-	// 	// Disable shader
-	// 	shader->disable();
-	// }
-
-	// Draw the floor grid
-	drawGrid();
+	if (current_stage)
+	{
+		current_stage->render();
+	}
 
 	// Render the FPS, Draw Calls, etc
 	drawText(2, 2, getGPUStats(), Vector3(1, 1, 1), 2);
@@ -116,77 +98,113 @@ void Game::render(void)
 
 void Game::update(double seconds_elapsed)
 {
-	float speed = seconds_elapsed * mouse_speed; //the speed is defined by the seconds_elapsed so it goes constant
+	if (current_stage) {
+		current_stage->update(seconds_elapsed);
+	}
+}
 
-	// Example
-	angle += (float)seconds_elapsed * 10.0f;
-
-	// Mouse input to rotate the cam
-	if (Input::isMousePressed(SDL_BUTTON_LEFT) || mouse_locked) //is left button pressed?
-	{
-		camera->rotate(Input::mouse_delta.x * 0.005f, Vector3(0.0f,-1.0f,0.0f));
-		camera->rotate(Input::mouse_delta.y * 0.005f, camera->getLocalVector( Vector3(-1.0f,0.0f,0.0f)));
+void Game::goToStage(uint8_t stage_id)
+{
+	auto it = stages.find(stage_id);
+	if (it == stages.end()) {
+		std::cerr << "Stage " << (int)stage_id << " not found!" << std::endl;
+		return;
 	}
 
-	// Async input to move the camera around
-	if (Input::isKeyPressed(SDL_SCANCODE_LSHIFT) ) speed *= 10; //move faster with left shift
-	if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP)) camera->move(Vector3(0.0f, 0.0f, 1.0f) * speed);
-	if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN)) camera->move(Vector3(0.0f, 0.0f,-1.0f) * speed);
-	if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT)) camera->move(Vector3(1.0f, 0.0f, 0.0f) * speed);
-	if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) camera->move(Vector3(-1.0f,0.0f, 0.0f) * speed);
+	Stage* new_stage = it->second;
+	if (!new_stage) {
+		std::cerr << "New stage is null!" << std::endl;
+		return;
+	}
+
+	if (current_stage) {
+		current_stage->onLeave(new_stage);
+	}
+	
+	new_stage->onEnter(current_stage);
+	current_stage = new_stage;
+}
+
+void Game::setMouseLocked(bool must_lock)
+{
+	mouse_locked = must_lock;
+	SDL_ShowCursor(!mouse_locked);
+	SDL_SetRelativeMouseMode((SDL_bool)mouse_locked);
 }
 
 //Keyboard event handler (sync input)
-void Game::onKeyDown( SDL_KeyboardEvent event )
+void Game::onKeyDown(SDL_KeyboardEvent event)
 {
+	if (current_stage) {
+		current_stage->onKeyDown(event);
+	}
+
 	switch(event.keysym.sym)
 	{
-		case SDLK_ESCAPE: must_exit = true; break; //ESC key, kill the app
-		case SDLK_F1: Shader::ReloadAll(); break; 
+		case SDLK_ESCAPE: must_exit = true; break;
+		case SDLK_F1: Shader::ReloadAll(); break;
 	}
 }
 
 void Game::onKeyUp(SDL_KeyboardEvent event)
 {
-
+	if (current_stage) {
+		current_stage->onKeyUp(event);
+	}
 }
 
-void Game::onMouseButtonDown( SDL_MouseButtonEvent event )
+void Game::onMouseButtonDown(SDL_MouseButtonEvent event)
 {
-	if (event.button == SDL_BUTTON_MIDDLE) //middle mouse
+	if (current_stage) {
+		current_stage->onMouseButtonDown(event);
+	}
+
+	if (event.button == SDL_BUTTON_MIDDLE)
 	{
 		mouse_locked = !mouse_locked;
 		SDL_ShowCursor(!mouse_locked);
-		SDL_SetRelativeMouseMode((SDL_bool)(mouse_locked));
+		SDL_SetRelativeMouseMode((SDL_bool)mouse_locked);
 	}
 }
 
 void Game::onMouseButtonUp(SDL_MouseButtonEvent event)
 {
-
+	if (current_stage) {
+		current_stage->onMouseButtonUp(event);
+	}
 }
 
 void Game::onMouseWheel(SDL_MouseWheelEvent event)
 {
-	mouse_speed *= event.y > 0 ? 1.1f : 0.9f;
+	if (current_stage) {
+		current_stage->onMouseWheel(event);
+	}
 }
 
 void Game::onGamepadButtonDown(SDL_JoyButtonEvent event)
 {
-
+	if (current_stage) {
+		current_stage->onGamepadButtonDown(event);
+	}
 }
 
 void Game::onGamepadButtonUp(SDL_JoyButtonEvent event)
 {
-
+	if (current_stage) {
+		current_stage->onGamepadButtonUp(event);
+	}
 }
 
 void Game::onResize(int width, int height)
 {
-    std::cout << "window resized: " << width << "," << height << std::endl;
-	glViewport( 0,0, width, height );
-	camera->aspect =  width / (float)height;
+	std::cout << "window resized: " << width << "," << height << std::endl;
+	glViewport(0,0, width, height);
+	camera->aspect = width / (float)height;
 	window_width = width;
 	window_height = height;
+
+	if (current_stage) {
+		current_stage->onResize(width, height);
+	}
 }
 
