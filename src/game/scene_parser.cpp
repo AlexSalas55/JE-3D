@@ -2,7 +2,8 @@
 
 #include "graphics/material.h"
 #include "graphics/mesh.h"
-
+#include "graphics/texture.h"
+#include "graphics/shader.h"
 #include "framework/utils.h"
 #include "framework/entities/entityMesh.h"
 
@@ -54,7 +55,17 @@ bool SceneParser::parse(const char* filename, Entity* root)
 		if (render_data.models.empty())
 			continue;
 
-		Material mat = render_data.material;
+		Material mat;
+		// Configurar el material básico
+		mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+		
+		// Intentar cargar la textura del colormap si existe
+		std::string texture_path = mesh_name.substr(0, mesh_name.find_last_of(".")) + "/colormap.png";
+		Texture* tex = Texture::Get(texture_path.c_str());
+		if (tex) {
+			mat.diffuse = tex;
+		}
+		
 		EntityMesh* new_entity = nullptr;
 
 		size_t tag = data.first.find("@tag");

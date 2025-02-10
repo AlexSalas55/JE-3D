@@ -45,13 +45,15 @@ void Player::update(float seconds_elapsed)
         velocity += move_dir;
     }
 
-    // Update player's position
+    // Actualizar posición
     position += velocity * seconds_elapsed;
-
-    // Decrease velocity when not moving
+    
+    // Aplicar la nueva posición
+    model.setTranslation(position.x, position.y, position.z);
+    
+    // Reducir velocidad
     velocity = velocity * 0.5f;
 
-    model.setTranslation(position);
     model.rotate(camera_yaw, Vector3(0, 1, 0));
 
     // Update sword position if exists

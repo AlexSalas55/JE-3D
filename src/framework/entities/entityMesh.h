@@ -11,7 +11,7 @@ class Camera;
 class EntityMesh : public Entity {
 
 public:
-    EntityMesh();
+    EntityMesh() : mesh(nullptr) {}
     EntityMesh(Mesh* mesh, const Material& material);
     virtual ~EntityMesh();
 
