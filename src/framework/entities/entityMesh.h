@@ -13,6 +13,8 @@ class EntityMesh : public Entity {
 public:
     EntityMesh() : mesh(nullptr) {}
     EntityMesh(Mesh* mesh, const Material& material);
+    //EntityMesh(Mesh* mesh, const Material& material, const std::string& name = "");
+
     virtual ~EntityMesh();
 
     Mesh* mesh = nullptr;

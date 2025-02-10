@@ -5,6 +5,7 @@
 #include "graphics/shader.h"
 #include "graphics/material.h"
 
+
 EntityMesh::EntityMesh(Mesh* mesh, const Material& material)
 	: mesh(mesh), material(material)
 {

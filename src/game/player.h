@@ -11,4 +11,5 @@ public:
     Player() {};
     Player(Mesh* mesh, const Material& material, const std::string& name = "");
     void update(float seconds_elapsed) override;
+	void testCollisions(const Vector3& target_position, float seconds_elapsed);
 }; 

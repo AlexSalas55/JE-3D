@@ -4,6 +4,7 @@
 #include "framework/utils.h"
 #include "framework/entities/entity.h"
 #include "framework/entities/entityMesh.h"
+#include "framework/entities/entity_collider.h"
 #include "graphics/shader.h"
 #include "graphics/mesh.h"
 #include "graphics/texture.h"
@@ -143,10 +144,57 @@ void World::update(double seconds_elapsed) {
     entities_to_destroy.clear();
 }
 
+
 void World::addEntity(Entity* entity) {
     root->addChild(entity);
 }
 
 void World::destroyEntity(Entity* entity) {
     entities_to_destroy.push_back(entity);
-} 
+}
+
+//raycast
+sCollisionData World::raycast(const Vector3& origin, const Vector3& direction, int layer, bool closest, float max_ray_dist) {
+	sCollisionData collision;
+	//collision.distance = max_ray_dist;
+
+    for (auto e : root->children) {
+
+        EntityCollider* ec = dynamic_cast<EntityCollider*>(e);
+        if (ec == nullptr || !(ec->getLayer() & layer)) {
+            continue;
+        }
+
+        Vector3 col_point;
+        Vector3 col_normal;
+
+        if (!ec->mesh->testRayCollision(ec->model, origin, direction,
+            col_point, col_normal, max_ray_dist)) {
+            continue;
+        }
+
+        // There was a collision! Update if nearest..
+        float new_distance = (col_point - origin).length();
+        if (new_distance < collision.distance) {
+            collision = { col_point, col_normal, new_distance, true, ec };
+        }
+
+        if (!closest) {
+            return collision;
+        }
+
+    }
+	return collision;
+}
+
+void World::test_scene_collisions(const Vector3& target_position, std::vector<sCollisionData>& collisions, std::vector<sCollisionData>& ground_collisions, eCollisionFilter filter)
+{
+	for (auto e : root->children)
+	{
+        EntityCollider* ec = dynamic_cast<EntityCollider*>(e);
+        if (ec == nullptr) {
+            continue;
+        }
+        ec->getCollisions(target_position, collisions, ground_collisions, filter);
+	}
+}

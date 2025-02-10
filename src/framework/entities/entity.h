@@ -4,6 +4,26 @@
 #include "framework/framework.h"
 
 class Camera;
+class Mesh;
+class World;
+class EntityCollider;
+
+enum eCollisionFilter {
+	NONE = 0,
+	WALL = 1 << 0,
+	SCENARIO = 1 << 1,
+	PLAYER = 1 << 2,
+	ENEMY = 1 << 3,
+	ALL = 0xFF
+};
+
+struct sCollisionData {
+	Vector3 colPoint;
+	Vector3 colNormal;
+	float distance = 0.f;
+	bool collision = false;
+	EntityCollider* collider = nullptr;
+};
 
 class Entity {
 
@@ -15,7 +35,6 @@ public:
 	std::string name;
 
 	Matrix44 model;
-
 	Entity* parent = nullptr;
 	std::vector<Entity*> children;
 
