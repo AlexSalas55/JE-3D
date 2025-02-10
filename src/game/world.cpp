@@ -23,7 +23,9 @@ World::World() {
     // Create and setup player
     Material player_material;
     player_material.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+	player_material.diffuse = Texture::Get("data/meshes/playerColor.png");
     player = new Player(Mesh::Get("data/meshes/soldier.obj"), player_material, "player");
+    player->model.setTranslation(0.0f, 1.0f, 0.0f);
     root->addChild(player);
 
     // Create heightmap - reducir el tamaño
@@ -40,21 +42,21 @@ World::World() {
     root->addChild(heightmap);
 
     // Create skybox environment
-    std::vector<std::string> cubemap_files = {
+    Texture* cube_texture = new Texture();
+    cube_texture->loadCubemap("landscape", {
         "data/textures/skybox/right.png",
         "data/textures/skybox/left.png",
-        "data/textures/skybox/top.png",
         "data/textures/skybox/bottom.png",
+        "data/textures/skybox/top.png",
         "data/textures/skybox/front.png",
         "data/textures/skybox/back.png"
-    };
+    });
 
     Material cubemap_material;
     cubemap_material.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/cubemap.fs");
-    cubemap_material.diffuse = Texture::Get("data/textures/skybox"); // Asumiendo que el Texture Manager sabe cargar cubemaps
-    cubemap_material.color = Vector4(1,1,1,1);
+    cubemap_material.diffuse = cube_texture;
     
-    // skybox = new EntityMesh(Mesh::Get("data/meshes/cubemap.ASE"), cubemap_material);
+    skybox = new EntityMesh(Mesh::Get("data/meshes/cubemap.ASE"), cubemap_material);
 
     // Load scene
     SceneParser parser;
@@ -69,9 +71,8 @@ void World::render() {
     glDisable(GL_BLEND);
     glDisable(GL_CULL_FACE);
     
-    // Comentamos la renderización del skybox ya que no lo estamos usando por ahora
-    //if(skybox)
-    //    skybox->render(camera);
+    if(skybox)
+       skybox->render(camera);
     
     glEnable(GL_DEPTH_TEST);
     
@@ -131,8 +132,7 @@ void World::update(double seconds_elapsed) {
     }
 
     // Comentamos la actualización del skybox
-    if(skybox)
-       skybox->model.setTranslation(camera->eye);
+    skybox->model.setTranslation(camera->eye);
 
     // Delete pending entities
     for (Entity* entity : entities_to_destroy) {

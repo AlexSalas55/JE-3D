@@ -30,7 +30,7 @@ public:
     float camera_speed = 2.0f;
     float mouse_speed = 0.25f;
     bool free_camera = false;
-    bool use_first_person = true;
+    bool use_first_person = false;
 
     void render();
     void update(double seconds_elapsed);

@@ -10,7 +10,7 @@ Player::Player(Mesh* mesh, const Material& material, const std::string& name)
     : EntityMesh(mesh, material)
 {
     this->name = name;
-    walk_speed = 1.0f;
+    walk_speed = 3.0f;
 
     // Create sword for player
     /*sword = new EntityMesh(Mesh::Get("data/meshes/sword.obj"), material);
