@@ -11,7 +11,7 @@ Player::Player(Mesh* mesh, const Material& material, const std::string& name)
     : EntityMesh(mesh, material)
 {
     this->name = name;
-    walk_speed = 3.0f;
+    walk_speed = 5.0f;
 
     // Create sword for player
     /*sword = new EntityMesh(Mesh::Get("data/meshes/sword.obj"), material);
@@ -111,7 +111,7 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
 
     //gravity
 	if (!is_grounded) {
-		velocity.y -= 100.5f * seconds_elapsed;
+		velocity.y -= 600.0f * seconds_elapsed;
 	} else {
         //Ajustar la posición del jugador para que esté justo encima del suelo
 		velocity.y = ground_height + target_position.y;

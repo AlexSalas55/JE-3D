@@ -26,7 +26,7 @@ World::World() {
     player_material.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
 	player_material.diffuse = Texture::Get("data/meshes/playerColor.png");
     player = new Player(Mesh::Get("data/meshes/soldier.obj"), player_material, "player");
-    player->model.setTranslation(0.0f, 1.0f, 0.0f);
+    player->model.setTranslation(0.0f, 20.0f, 0.0f);
     root->addChild(player);
 
     // Create heightmap - reducir el tamaño
@@ -91,22 +91,31 @@ void World::update(double seconds_elapsed) {
         // Async input to move the camera around
         if (Input::isKeyPressed(SDL_SCANCODE_LSHIFT)) 
             speed *= 10;
-        if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP))
+        if (Input::isKeyPressed(SDL_SCANCODE_W))
             camera->move(Vector3(0.0f, 0.0f, 1.0f) * speed);
-        if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN))
+        if (Input::isKeyPressed(SDL_SCANCODE_S))
             camera->move(Vector3(0.0f, 0.0f, -1.0f) * speed);
-        if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT))
+        if (Input::isKeyPressed(SDL_SCANCODE_A))
             camera->move(Vector3(1.0f, 0.0f, 0.0f) * speed);
-        if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT))
+        if (Input::isKeyPressed(SDL_SCANCODE_D))
             camera->move(Vector3(-1.0f, 0.0f, 0.0f) * speed);
     }
     else {
         // Update player first
         player->update(seconds_elapsed);
 
-        // Camera control
-        camera_yaw += Input::mouse_delta.x * seconds_elapsed * mouse_speed;
-        camera_pitch += Input::mouse_delta.y * seconds_elapsed * mouse_speed;
+        // Reemplazar el control del ratón con las flechas
+        float rotation_speed = 1.5f; // Velocidad de rotación
+        if (Input::isKeyPressed(SDL_SCANCODE_LEFT))
+            camera_yaw -= seconds_elapsed * rotation_speed;
+        if (Input::isKeyPressed(SDL_SCANCODE_RIGHT))
+            camera_yaw += seconds_elapsed * rotation_speed;
+        if (Input::isKeyPressed(SDL_SCANCODE_DOWN))
+            camera_pitch -= seconds_elapsed * rotation_speed;
+        if (Input::isKeyPressed(SDL_SCANCODE_UP))
+            camera_pitch += seconds_elapsed * rotation_speed;
+
+        // Mantener el pitch dentro de límites
         camera_pitch = clamp(camera_pitch, -M_PI * 0.4f, M_PI * 0.4f);
 
         Matrix44 mYaw;
@@ -119,12 +128,12 @@ void World::update(double seconds_elapsed) {
 
         if (use_first_person) {
             // Simplificar la lógica de primera persona
-            Vector3 camera_height = Vector3(0.0f, 1.7f, 0.0f);
+            Vector3 camera_height = Vector3(0.0f, 1.5f, 0.0f);
             eye = player_pos + camera_height;
             center = eye + front;
         }
         else {
-            float orbit_dist = 3.0f;  // Aumentado de 1.0f a 3.0f para alejar la cámara
+            float orbit_dist = 6.0f;  // Aumentado de 1.0f a 3.0f para alejar la cámara
             eye = player_pos - front * orbit_dist + Vector3(0.0f, 1.5f, 0.0f); // Aumentada la altura de 0.5f a 1.5f
             center = player_pos + Vector3(0.f, 0.8f, 0.0f); // Ajustado el punto de mira
         }

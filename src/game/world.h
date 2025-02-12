@@ -38,7 +38,7 @@ public:
     
     float sphere_radius = 1.0f;
     float sphere_grow = .3f;
-    float player_height = -1.2f;
+    float player_height = -1.0f;
 
     void render();
     void update(double seconds_elapsed);
