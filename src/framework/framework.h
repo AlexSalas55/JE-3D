@@ -7,6 +7,8 @@
 #include <vector>
 #include <cmath>
 #include <stdlib.h>
+#include <ostream>
+
 
 #ifndef PI
 	#define PI 3.14159265359f
@@ -88,6 +90,11 @@ public:
 
 	static Vector3 UP;
 
+	//float x, y, z;
+
+
+
+
 	union
 	{
 		struct { float x,y,z; };
@@ -97,6 +104,12 @@ public:
 	Vector3() { x = y = z = 0.0f; }
 	Vector3(float x, float y, float z) { this->x = x; this->y = y; this->z = z;	}
 	Vector3(float v) { this->x = v; this->y = v; this->z = v; }
+
+	// Overload the << operator
+	friend std::ostream& operator<<(std::ostream& os, const Vector3& v) {
+		os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+		return os;
+	}
 
 	double length();
 	double length() const;

@@ -29,6 +29,7 @@ public:
     Vector3 eye;
     Vector3 center;
 
+    double time = 0.f;
     float camera_yaw = 0.f;
     float camera_pitch = 0.f;
     float camera_speed = 2.0f;
@@ -36,9 +37,9 @@ public:
     bool free_camera = false;
     bool use_first_person = false;
     
-    float sphere_radius = 1.0f;
+    float sphere_radius = 0.8f;
     float sphere_grow = .3f;
-    float player_height = -1.0f;
+    float player_height = 1.5f;
 
     void render();
     void update(double seconds_elapsed);

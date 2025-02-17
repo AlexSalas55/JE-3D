@@ -71,6 +71,18 @@ bool SceneParser::parse(const char* filename, Entity* root)
 
 		size_t tag = data.first.find("@tag");
 
+		//tag player pos
+		size_t tag_player = data.first.find("@player");
+
+		//tag player pos player set translation
+		if (tag_player != std::string::npos) {
+			Mesh* mesh = Mesh::Get("...");
+			new_entity = new EntityMesh(mesh, mat);
+			new_entity->model.setTranslation(0.0f, 250.0f, 0.0f);
+			//player set translation
+			//player->setTranslation(render_data.models[0].getTranslation());
+		}
+
 		if (tag != std::string::npos) {
 			Mesh* mesh = Mesh::Get("...");
 			// Create a different type of entity

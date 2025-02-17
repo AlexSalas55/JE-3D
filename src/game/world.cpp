@@ -26,7 +26,9 @@ World::World() {
     player_material.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
 	player_material.diffuse = Texture::Get("data/meshes/playerColor.png");
     player = new Player(Mesh::Get("data/meshes/soldier.obj"), player_material, "player");
-    player->model.setTranslation(0.0f, 20.0f, 0.0f);
+    player->model.setTranslation(0.0f, 250.0f, 0.0f); //mapa pepino
+    //player->model.setTranslation(20.0f, 250.0f, 0.0f); //old map
+
     root->addChild(player);
 
     // Create heightmap - reducir el tamaño
@@ -59,6 +61,9 @@ World::World() {
     
     skybox = new EntityMesh(Mesh::Get("data/meshes/cubemap.ASE"), cubemap_material);
 
+    //timer
+    time = 0.0f;
+
     // Load scene
     SceneParser parser;
     bool ok = parser.parse("data/myscene.scene", root);
@@ -85,6 +90,8 @@ void World::render() {
 }
 
 void World::update(double seconds_elapsed) {
+    time += seconds_elapsed;
+
     if (free_camera) {
         float speed = seconds_elapsed * camera_speed;
         
