@@ -11,6 +11,7 @@ uniform samplerCube u_texture;
 
 void main()
 {
-	vec3 V = normalize( u_camera_position - v_world_position);
-	gl_FragColor = u_color * textureCube( u_texture, V );
+	// vec3 V = normalize( u_camera_position - v_world_position);
+	// gl_FragColor = u_color * textureCube( u_texture, V );
+	gl_FragColor = u_color * textureCube(u_texture, normalize(-v_position));
 }

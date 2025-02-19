@@ -32,7 +32,7 @@ public:
     double time = 0.f;
     float camera_yaw = 0.f;
     float camera_pitch = 0.f;
-    float camera_speed = 2.0f;
+    float camera_speed = 10.0f;
     float mouse_speed = 0.25f;
     bool free_camera = false;
     bool use_first_person = false;
@@ -40,6 +40,11 @@ public:
     float sphere_radius = 0.8f;
     float sphere_grow = .3f;
     float player_height = 1.5f;
+
+    // Variables para almacenar la posición de la cámara
+    Vector3 camera_stored_eye;
+    Vector3 camera_stored_center;
+    Vector3 camera_stored_up;
 
     void render();
     void update(double seconds_elapsed);

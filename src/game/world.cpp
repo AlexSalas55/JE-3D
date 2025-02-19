@@ -30,36 +30,47 @@ World::World() {
     //player->model.setTranslation(20.0f, 250.0f, 0.0f); //old map
 
     root->addChild(player);
-
-    // Create heightmap - reducir el tamaño
-    float size = 0.0f;  // Cambiado de 500.0f a 50.0f
-    Mesh* heightmap_mesh = new Mesh();
-    heightmap_mesh->createPlane(size);
-
-    Material heightmap_material;
-    heightmap_material.shader = Shader::Get("data/shaders/heightmap.vs", "data/shaders/heightmap.fs");
-    heightmap_material.color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-
-    EntityMesh* heightmap = new EntityMesh(heightmap_mesh, heightmap_material);
-    heightmap->model.translate(-size * 0.5f, 0.0f, -size * 0.5f);
-    root->addChild(heightmap);
-
-    // Create skybox environment
-    Texture* cube_texture = new Texture();
-    cube_texture->loadCubemap("landscape", {
-        "data/textures/skybox/right.png",
-        "data/textures/skybox/left.png",
-        "data/textures/skybox/bottom.png",
-        "data/textures/skybox/top.png",
-        "data/textures/skybox/front.png",
-        "data/textures/skybox/back.png"
-    });
-
-    Material cubemap_material;
-    cubemap_material.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/cubemap.fs");
-    cubemap_material.diffuse = cube_texture;
     
-    skybox = new EntityMesh(Mesh::Get("data/meshes/cubemap.ASE"), cubemap_material);
+    {
+        // Create heightmap
+
+        // Create heightmap - reducir el tamaño
+        float size = 2500.0f;  // Cambiado de 500.0f a 50.0f
+
+        Mesh* heightmap_mesh = new Mesh();
+        heightmap_mesh->createSubdividedPlane(size, 256);
+
+        Material heightmap_material = {
+            Shader::Get("data/shaders/height_map.vs", "data/shaders/height_map.fs"),
+            Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+            Texture::Get("data/textures/heightmap.png")
+        };
+
+        EntityMesh* heightmap = new EntityMesh(heightmap_mesh, heightmap_material);
+        heightmap->model.translate(-size * 0.5f, 0.0f, -size * 0.5f);
+        root->addChild(heightmap);
+    }
+    
+    {
+        // Create skybox environment
+        Texture* cube_texture = new Texture();
+        cube_texture->loadCubemap("landscape", {
+            "data/textures/skybox/right.png",
+            "data/textures/skybox/left.png",
+            "data/textures/skybox/bottom.png",
+            "data/textures/skybox/top.png",
+            "data/textures/skybox/front.png",
+            "data/textures/skybox/back.png"
+        });
+
+        Material cubemap_material;
+        cubemap_material.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/cubemap.fs");
+        cubemap_material.diffuse = cube_texture;
+        
+        skybox = new EntityMesh(Mesh::Get("data/meshes/cubemap.ASE"), cubemap_material);
+        // skybox->model.scale(5000.0f, 5000.0f, 5000.0f); //Para escalar el mapa? TODO
+
+    }
 
     //timer
     time = 0.0f;
@@ -76,6 +87,7 @@ void World::render() {
     
     glDisable(GL_BLEND);
     glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
     
     if(skybox)
        skybox->render(camera);
@@ -92,20 +104,61 @@ void World::render() {
 void World::update(double seconds_elapsed) {
     time += seconds_elapsed;
 
+    // Toggle free camera with C key
+    if (Input::wasKeyPressed(SDL_SCANCODE_C)) {
+        free_camera = !free_camera;
+        if (free_camera) {
+            // Store current camera position and orientation when entering free camera
+            camera_stored_eye = camera->eye;
+            camera_stored_center = camera->center;
+            camera_stored_up = camera->up;
+        } else {
+            // Restore camera position when exiting free camera mode
+            camera->lookAt(camera_stored_eye, camera_stored_center, camera_stored_up);
+        }
+    }
+
     if (free_camera) {
         float speed = seconds_elapsed * camera_speed;
         
         // Async input to move the camera around
         if (Input::isKeyPressed(SDL_SCANCODE_LSHIFT)) 
             speed *= 10;
-        if (Input::isKeyPressed(SDL_SCANCODE_W))
-            camera->move(Vector3(0.0f, 0.0f, 1.0f) * speed);
-        if (Input::isKeyPressed(SDL_SCANCODE_S))
-            camera->move(Vector3(0.0f, 0.0f, -1.0f) * speed);
-        if (Input::isKeyPressed(SDL_SCANCODE_A))
-            camera->move(Vector3(1.0f, 0.0f, 0.0f) * speed);
-        if (Input::isKeyPressed(SDL_SCANCODE_D))
-            camera->move(Vector3(-1.0f, 0.0f, 0.0f) * speed);
+
+        Vector3 forward = (camera->center - camera->eye).normalize();
+        Vector3 right = forward.cross(camera->up).normalize();
+        Vector3 up = Vector3(0, 1, 0);
+
+        // Update camera movement based on its orientation (WASD y flechas)
+        if (Input::isKeyPressed(SDL_SCANCODE_W) || Input::isKeyPressed(SDL_SCANCODE_UP))
+            camera->eye = camera->eye + forward * speed;
+        if (Input::isKeyPressed(SDL_SCANCODE_S) || Input::isKeyPressed(SDL_SCANCODE_DOWN))
+            camera->eye = camera->eye - forward * speed;
+        if (Input::isKeyPressed(SDL_SCANCODE_A) || Input::isKeyPressed(SDL_SCANCODE_LEFT))
+            camera->eye = camera->eye - right * speed;
+        if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT))
+            camera->eye = camera->eye + right * speed;
+        if (Input::isKeyPressed(SDL_SCANCODE_Q))
+            camera->eye = camera->eye + up * speed;
+        if (Input::isKeyPressed(SDL_SCANCODE_E))
+            camera->eye = camera->eye - up * speed;
+
+        // Mouse look - invertimos el movimiento vertical (pitch)
+        camera_yaw -= Input::mouse_delta.x * 0.005f;
+        camera_pitch += Input::mouse_delta.y * 0.005f; // Cambiado el signo aquí
+        
+        // Limit pitch to avoid camera flipping
+        camera_pitch = clamp(camera_pitch, -M_PI * 0.4f, M_PI * 0.4f);
+        
+        // Calculate new front vector
+        Vector3 front;
+        front.x = cos(camera_yaw) * cos(camera_pitch);
+        front.y = sin(camera_pitch);
+        front.z = sin(camera_yaw) * cos(camera_pitch);
+        front = front.normalize();
+        
+        camera->center = camera->eye + front;
+        camera->updateViewMatrix();
     }
     else {
         // Update player first
@@ -148,7 +201,7 @@ void World::update(double seconds_elapsed) {
         camera->lookAt(eye, center, Vector3(0, 1, 0));
     }
 
-    // Comentamos la actualización del skybox
+    // move skybox to player
     skybox->model.setTranslation(camera->eye);
 
     // Delete pending entities
