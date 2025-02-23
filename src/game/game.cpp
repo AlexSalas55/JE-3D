@@ -40,7 +40,7 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	// Create and setup camera first
 	camera = new Camera();
 	camera->lookAt(Vector3(0.f, 2.f, -5.f), Vector3(0.f, 0.f, 0.f), Vector3(0.f, 1.f, 0.f));
-	camera->setPerspective(60.f, window_width/(float)window_height, 0.1f, 1000.f);
+	camera->setPerspective(60.f, window_width/(float)window_height, 0.1f, 3000.f);
 
 	// OpenGL flags
 	glEnable(GL_CULL_FACE);

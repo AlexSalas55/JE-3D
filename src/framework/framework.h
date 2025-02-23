@@ -314,6 +314,35 @@ public:
 		float q[4];
 	};
 
+	static Quaternion FromMatrix(const Matrix44& matrix) {
+		Quaternion q;
+		q.setFromMatrix(matrix);
+		return q;
+	}
+
+	void setFromMatrix(const Matrix44& matrix) {
+		float trace = matrix.m[0] + matrix.m[5] + matrix.m[10];
+		if (trace > 0.0f) {
+			float s = sqrt(trace + 1.0f) * 2.0f;
+			w = 0.25f * s;
+			x = (matrix.m[9] - matrix.m[6]) / s;
+			y = (matrix.m[2] - matrix.m[8]) / s;
+			z = (matrix.m[4] - matrix.m[1]) / s;
+		}
+		else if ((matrix.m[0] > matrix.m[5]) && (matrix.m[0] > matrix.m[10])) {
+			float s = sqrt(1.0f + matrix.m[0] - matrix.m[5] - matrix.m[10]) * 2.0f;
+			w = (matrix.m[9] - matrix.m[6]) / s;
+			x = 0.25f * s;
+			y = (matrix.m[1] + matrix.m[4]) / s;
+			z = (matrix.m[2] + matrix.m[8]) / s;
+		}
+		else if (matrix.m[5] > matrix.m[10]) {
+			float s = sqrt(1.0f + matrix.m[5] - matrix.m[0] - matrix.m[10]) * 2.0f;
+			w = (matrix.m[2] - matrix.m[8]) / s;
+			x = (matrix.m[1] + matrix.m[4]) / s;
+		}
+	}
+
 public:
 	Quaternion();
 	Quaternion(const float* q);
