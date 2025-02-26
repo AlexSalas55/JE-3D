@@ -47,7 +47,7 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	glEnable(GL_DEPTH_TEST);
 
 	// Stages
-	stages[STAGE_MENU] = new Stage();
+	stages[STAGE_MENU] = new MenuStage();
 	stages[STAGE_PLAY] = new PlayStage();
 	
 	for (auto entry : stages) {
@@ -55,7 +55,7 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 		stage->init();
 	}
 	
-	goToStage(STAGE_PLAY);
+	goToStage(STAGE_MENU);
 
 	// Load one texture using the Texture Manager
 	texture = Texture::Get("data/textures/texture.tga");
@@ -71,7 +71,8 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	material.shader = shader;
 	material.color = Vector4::RED;
 
-   entity_mesh = new EntityMesh(mesh, material);
+	entity_mesh = new EntityMesh(mesh, material);
+	
 	// Hide the cursor
 	SDL_ShowCursor(!mouse_locked); //hide or show the mouse
 }

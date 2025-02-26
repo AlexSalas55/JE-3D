@@ -5,6 +5,7 @@ Uint8 Input::prev_keystate[SDL_NUM_SCANCODES]; //previous before
 
 //mouse state
 int Input::mouse_state; //tells which buttons are pressed
+int Input::prev_mouse_state; //tells which buttons were pressed
 Vector2 Input::mouse_position; //last mouse position
 Vector2 Input::mouse_delta; //mouse movement in the last frame
 float Input::mouse_wheel;
@@ -42,6 +43,7 @@ void Input::update()
 	memcpy((void*)&Input::prev_keystate, Input::keystate, SDL_NUM_SCANCODES);
 	Input::keystate = SDL_GetKeyboardState(NULL);
 
+	prev_mouse_state = mouse_state;
 	Input::mouse_delta.set(0.0f, 0.0f);
 
 	//gamepads

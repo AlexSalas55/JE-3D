@@ -1,5 +1,6 @@
 #pragma once
 #include "framework/input.h"
+#include "framework/entities/entityMesh.h"
 
 class Entity;
 class EntityMesh;
@@ -28,6 +29,20 @@ public:
     virtual void onGamepadButtonDown(SDL_JoyButtonEvent event) {};
     virtual void onGamepadButtonUp(SDL_JoyButtonEvent event) {};
     virtual void onResize(int width, int height) {};
+};
+
+class MenuStage : public Stage {
+public:
+    MenuStage() {};
+    void init() override;
+    void render() override;
+    void update(double seconds_elapsed) override;
+    void onEnter(Stage* prev_stage) override;
+
+private:
+    EntityMesh* background;
+    EntityMesh* play_button;
+    EntityMesh* exit_button;
 };
 
 class PlayStage : public Stage {

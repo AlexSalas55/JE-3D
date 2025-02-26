@@ -25,7 +25,8 @@ public:
     Entity* root = nullptr;
     EntityMesh* skybox = nullptr;
     Player* player = nullptr;
-    Camera* camera = nullptr;
+    Camera* camera;      // 3D camera
+    Camera* camera2D;    // 2D camera for UI
     Vector3 eye;
     Vector3 center;
 

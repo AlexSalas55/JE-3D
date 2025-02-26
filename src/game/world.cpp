@@ -18,6 +18,10 @@ World::World() {
     // Get camera from Game
     camera = Game::instance->camera;
     
+    // Create 2D camera for UI
+    camera2D = new Camera();
+    camera2D->setOrthographic(0, Game::instance->window_width, Game::instance->window_height, 0, -1, 1);
+    
     // Create root entity
     root = new Entity();
 
