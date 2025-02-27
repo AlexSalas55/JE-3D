@@ -68,6 +68,7 @@ void Player::update(float seconds_elapsed)
         current_speed = 0.0f;
         velocity = Vector3(0.0f);
         vertical_velocity = 0.0f;
+
     }
 
     //if 1 is pressed spawn the player in a specific position
@@ -77,6 +78,7 @@ void Player::update(float seconds_elapsed)
         current_speed = 0.0f;
         velocity = Vector3(0.0f);
         vertical_velocity = 0.0f;
+
     }
     //if 2 is pressed spawn the player in map2
     if (Input::isKeyPressed(SDL_SCANCODE_2)) {
@@ -85,6 +87,7 @@ void Player::update(float seconds_elapsed)
         current_speed = 0.0f;
         velocity = Vector3(0.0f);
         vertical_velocity = 0.0f;
+
     }
 
     //debug position
@@ -135,16 +138,30 @@ void Player::update(float seconds_elapsed)
             if (slope_factor > 0) { //Downhill acceleration
                 velocity += -slope_direction * gravity_force * slope_factor * seconds_elapsed;
 
+                //Calculate the slope angle in degrees
+                float slope_angle_deg = slope_factor * RAD2DEG;
+                //desired camera angle based on the slope
+                float target_camera_angle = slope_angle_deg * 0.02f;
+                target_camera_angle = clamp(target_camera_angle, 0.45f, 5.0f);
+                //Smooth interpolation
+                float camera_smooth_factor = 0.01f;
+                //Interpolation between  camera pitch and target camera angle
+                float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
+                //Update camera pitch
+                World::get_instance()->camera_pitch = camera_angle;
+
             } else if (slope_factor < 0) { //Uphill Deceleration
                 current_acceleration -= uphill_deceleration * abs(slope_factor);
             }
     
             //acceleration to speed
             current_speed += current_acceleration * seconds_elapsed;
-            current_speed = clamp(current_speed, 0.0f, max_speed);
+            //current_speed = clamp(current_speed, 0.0f, max_speed);
     
             //update velocity
             velocity = slope_move * current_speed;
+
+
         }
         else {
             //When no input let gravity and friction will affect speed
@@ -156,34 +173,63 @@ void Player::update(float seconds_elapsed)
     
             //Calculate slope factor
             float slope_factor = sin(slope_angle);
+
     
             //apply gravity(only downhill)
             if (slope_factor > 0.01f) { 
-                velocity += -slope_direction * gravity_force * slope_factor * seconds_elapsed;
 
-                //automatic camera following skier////////////////////////////////////////
-                /*
+                //velocity += -slope_direction * gravity_force * slope_factor * seconds_elapsed;
+                velocity += -slope_direction * (gravity_force * slope_factor * seconds_elapsed);
+                //increase velocity over time
+                current_speed += acceleration * seconds_elapsed;
+                //current_speed = clamp(current_speed, 0.0f, max_speed); 
+                
+                //velocity = velocity.normalize() * current_speed;            
+            }
+            else if (slope_factor < 0) {
+                //Apply uphill deceleration based on slope
+                //current_speed *= (1.0f - uphill_deceleration * seconds_elapsed);
+                //current_speed -= uphill_deceleration * slope_factor;
+
+                //current_speed = clamp(current_speed, current_speed, 0.0f); 
+				//current speed 0.0f
+				//current_speed = std::max(current_speed, 0.0f);
+                
+                //disabled now for testing
+                //current_speed += -uphill_deceleration * seconds_elapsed;
+				//velocity -= -slope_direction * gravity_force * slope_factor * seconds_elapsed * uphill_deceleration;
+
+                //decrease speed over time but direction on slope
+                
+            } else { //Flat ground (Decelerate gradually)
+                current_speed *= (1.0f - base_deceleration * seconds_elapsed);
+
                 //Calculate the slope angle in degrees
                 float slope_angle_deg = slope_factor * RAD2DEG;
                 //desired camera angle based on the slope
-                float target_camera_angle = slope_angle_deg * 0.02f;
-                target_camera_angle = clamp(target_camera_angle, 0.0f, 15.0f);
+                float target_camera_angle = slope_angle_deg * 0.005f;
+                target_camera_angle = clamp(target_camera_angle, 0.015f, 5.0f);
                 //Smooth interpolation
-                float camera_smooth_factor = 0.05f;
+                float camera_smooth_factor = 0.01f;
                 //Interpolation between  camera pitch and target camera angle
                 float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
                 //Update camera pitch
                 World::get_instance()->camera_pitch = camera_angle;
-                */
             }
-            else if (slope_factor < -0.01f) {
-                //Apply uphill deceleration based on slope
-                current_speed *= (1.0f - uphill_deceleration * seconds_elapsed);
-                
-            } else { //Flat ground (Decelerate gradually)
-                current_speed *= (1.0f - base_deceleration * seconds_elapsed);
-            }
-    
+
+
+            //Calculate the slope angle in degrees
+            float slope_angle_deg = slope_factor * RAD2DEG;
+            //desired camera angle based on the slope
+            float target_camera_angle = slope_angle_deg * 0.02f;
+            target_camera_angle = clamp(target_camera_angle, 0.45f, 5.0f);
+            //Smooth interpolation
+            float camera_smooth_factor = 0.01f;
+            //Interpolation between  camera pitch and target camera angle
+            float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
+            //Update camera pitch
+            World::get_instance()->camera_pitch = camera_angle;
+
             //Normalize velocity to current speed
             if (velocity.length() > 0) {
                 velocity = velocity.normalize() * current_speed;
@@ -191,6 +237,8 @@ void Player::update(float seconds_elapsed)
     
             //Update velocity based on slope-movement direction and speed
             velocity = slope_move * current_speed;
+            //velocity = velocity + slope_move * current_speed;
+            //velocity = (velocity - ground_normal * velocity.dot(ground_normal)).normalize() * current_speed + (-slope_direction * gravity_force * sin(slope_angle) * seconds_elapsed);
         }
         
         //Apply friction dynamically on ground to reduce speed over time
@@ -201,6 +249,7 @@ void Player::update(float seconds_elapsed)
             effective_friction *= (1.0f - slope_factor * 0.5f); //downhill less Friction
 
         } else if (slope_factor < 0) {
+            //a lot more when uphill
             effective_friction *= (1.0f + abs(slope_factor) * 0.5f); //uphill more friction
         }
         //effective friction based on the slope
@@ -218,9 +267,26 @@ void Player::update(float seconds_elapsed)
         velocity.y -= gravity * air_gravity_multiplier * seconds_elapsed;
         velocity += gravity_direction * gravity_force * seconds_elapsed;
 
+        //push the skier forward
+        velocity += front * current_speed * seconds_elapsed;
+
         //terminal velocity to prevent floating
         velocity.y = std::max(velocity.y, terminal_velocity);
 
+
+        float slope_angle = acos(ground_normal.dot(Vector3::UP));
+        float slope_factor = sin(slope_angle);
+        //Calculate the slope angle in degrees
+        float slope_angle_deg = slope_factor * RAD2DEG;
+        //desired camera angle based on the slope
+        float target_camera_angle = slope_angle_deg * 4.0f;
+        target_camera_angle = clamp(target_camera_angle, 0.0f, 1.0f);
+        //Smooth interpolation
+        float camera_smooth_factor = 0.01f;
+        //Interpolation between  camera pitch and target camera angle
+        float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
+        //Update camera pitch
+        World::get_instance()->camera_pitch = camera_angle;
     }
     //Update position and check collisions
     Vector3 desired_position = position + velocity * seconds_elapsed;
@@ -233,10 +299,78 @@ void Player::update(float seconds_elapsed)
         position.y = ground_normal.y;
     }
     
-    //ensure slope alignment
+    
     Vector3 forward = model.frontVector();
     Vector3 new_forward = (forward - ground_normal * forward.dot(ground_normal)).normalize();
     model.setFrontAndOrthonormalize(new_forward);
+    
+
+    // Check if skier is facing uphill
+    Vector3 slope_direction = (Vector3::UP - ground_normal * (Vector3::UP.dot(ground_normal))).normalize();
+
+    float facing_slope_dot = new_forward.dot(-slope_direction); // Negative means uphill
+    float slope_angle = acos(ground_normal.dot(Vector3::UP));
+    float slope_factor = sin(slope_angle);
+    
+    static float uphill_timer = 0.0f;
+    if (facing_slope_dot < 0) {
+        uphill_timer += seconds_elapsed;
+
+        //Calculate the slope angle in degrees
+        float slope_angle_deg = slope_factor * RAD2DEG;
+        //desired camera angle based on the slope
+        float target_camera_angle = -slope_angle_deg * 0.045f;
+        target_camera_angle = clamp(target_camera_angle, -15.0f, 0.0f);
+        //Smooth interpolation
+        float camera_smooth_factor = 0.01f;
+        //Interpolation between  camera pitch and target camera angle
+        float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
+        //Update camera pitch
+        World::get_instance()->camera_pitch = camera_angle;
+
+        if (uphill_timer > 0.3f && !Input::isKeyPressed(SDL_SCANCODE_W)) {
+            // Skier is facing uphill for more than 2 seconds -> apply extra deceleration
+            //this works but doesnt stop it
+            current_speed *= (1.0f - uphill_deceleration * abs(slope_factor) * seconds_elapsed);
+            //current_speed -= uphill_deceleration * abs(slope_factor) * seconds_elapsed;
+
+            if (current_speed < 5.0f && !Input::isKeyPressed(SDL_SCANCODE_W)) {
+                //uphill_timer = 0.25f; // Reset to half time when speed is very low
+                current_speed -= uphill_deceleration * 5.0f * seconds_elapsed;
+            }
+            /*
+            float slope_angle_deg = slope_factor * RAD2DEG;
+            float target_camera_angle = -slope_angle_deg * 0.2f; // Adjust factor for a better view
+            target_camera_angle = clamp(target_camera_angle, -2.0f, 5.0f); // Allow a wider range of angles
+            float camera_smooth_factor = 0.05f; // Smooth interpolation factor
+            float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
+            World::get_instance()->camera_pitch = camera_angle;
+            */
+
+            float slope_angle_deg = slope_factor * RAD2DEG;
+            //desired camera angle based on the slope
+            float target_camera_angle = -slope_angle_deg * 5.9f;
+            target_camera_angle = clamp(target_camera_angle, 0.0f, -10.5f);
+            //Smooth interpolation
+            float camera_smooth_factor = 0.01f;
+            //Interpolation between  camera pitch and target camera angle
+            float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
+            //Update camera pitch
+            World::get_instance()->camera_pitch = camera_angle;
+        }
+
+    } else {
+        uphill_timer = 0.0f; // Reset timer when not facing uphill
+    }
+
+    //if player in the air make the player rotate
+    if (!is_grounded) {
+        if (Input::isKeyPressed(SDL_SCANCODE_SPACE)) {
+            model.rotate(velocity.length() * 0.2f, Vector3(0, 1, 0));
+        }
+    }
+
+
 
     EntityMesh::update(seconds_elapsed);
 }
@@ -291,7 +425,7 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
                 velocity = slide_direction * current_speed;
             } else {
                 //Reduce speed drastically when colliding with an object
-                velocity *= 0.3f;
+                velocity *= 0.1f;
             }
         }
     }
@@ -299,7 +433,7 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
     //Apply gravity & movement logic
     if (!is_grounded) {
         Vector3 horizontal_velocity = Vector3(velocity.x, 0, velocity.z);
-        vertical_velocity -= gravity_force * 3.0f * seconds_elapsed;
+        vertical_velocity -= gravity_force * 2.8f * seconds_elapsed;
         vertical_velocity = std::max(vertical_velocity, terminal_velocity);
         velocity = horizontal_velocity + Vector3(0, vertical_velocity, 0);
     } else {

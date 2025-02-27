@@ -20,12 +20,12 @@ class Player : public EntityMesh {
     float top_speed = 90.0f;
 
     float air_control_factor = 0.5f;
-    float air_gravity_multiplier = 0.25f;
+    float air_gravity_multiplier = 0.15f;
 
-    float max_speed = 80.0f;          
+    float max_speed = 50.0f;          
     float acceleration = 8.0f;        
     float base_deceleration = 0.8f;    
-    float uphill_deceleration = 2000.0f;
+    float uphill_deceleration = 5.0f;
     float current_speed = 0.0f;
     float last_speed = 0.0f;
     float last_acceleration_time = 0.0f;
