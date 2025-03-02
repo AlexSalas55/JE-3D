@@ -38,7 +38,11 @@ void EntityMesh::render(Camera* camera)
 		shader->setUniform("u_texture", material.diffuse, 0);
 	}
 
-	mesh->render(GL_TRIANGLES);
+	if (isAnimated) {
+		mesh->renderAnimated(GL_TRIANGLES, &animator.getCurrentSkeleton());
+	} else {
+		mesh->render(GL_TRIANGLES);
+	}
 
 	shader->disable();
 

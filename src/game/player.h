@@ -1,6 +1,18 @@
 #pragma once
 #include "framework/entities/entityMesh.h"
 #include "graphics/material.h"
+#include "framework/animation.h"
+
+enum eAnimationState {
+    IDLE,
+    MOVE,
+    BRAKE,
+    IMPULSE,
+    JUMP,
+    FALL,
+    COLLISION,
+    CELEBRATE
+};
 
 class Player : public EntityMesh {
     float walk_speed = 20.0f;
@@ -12,6 +24,9 @@ class Player : public EntityMesh {
     float gravity = 1120.0f;
     bool is_grounded;
     Vector3 ground_normal;
+
+    // Animations
+    eAnimationState animation_state = eAnimationState::IDLE;
 
     float bounce_force = 5.0f;
 

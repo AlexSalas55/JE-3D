@@ -5,6 +5,7 @@
 #include "framework/entities/entity.h"
 #include "graphics/mesh.h"
 #include "graphics/material.h"
+#include "framework/animation.h"
 
 class Camera;
 
@@ -20,6 +21,10 @@ public:
     Mesh* mesh = nullptr;
     Material material;
     std::string name;
+
+    // animations
+    Animator animator;
+    bool isAnimated = false;
 
     // Miembros agregados para el renderizado instanciado
     bool isInstanced = false;

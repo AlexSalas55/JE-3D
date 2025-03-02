@@ -7,13 +7,16 @@
 #include "game/world.h"
 #include "framework/entities/entity_collider.h"
 
-
 Player::Player(Mesh* mesh, const Material& material, const std::string& name)
     : EntityMesh(mesh, material)
 {
     this->name = name;
     walk_speed = 5.0f;
     //last_acceleration_time = 0.0f;
+
+    // Animations
+    isAnimated = true;
+    animator.playAnimation("data/meshes/animations/idle.skanim", true);
 
     // Create sword for player
     /*sword = new EntityMesh(Mesh::Get("data/meshes/sword.obj"), material);
@@ -60,16 +63,16 @@ void Player::update(float seconds_elapsed)
     Vector3 right = mYaw.rightVector().normalize();
     Vector3 position = model.getTranslation();
 
-    if (position.z >= 269.0f) { //trigger to reach the end of the map
-        std::cout << "Skier has reached the finish line! Position: " << position.z << std::endl;
-        //reset player
-        position = Vector3(0.0f, 200.0f, 0.0f);
-        model.setTranslation(position.x, position.y, position.z);
-        current_speed = 0.0f;
-        velocity = Vector3(0.0f);
-        vertical_velocity = 0.0f;
+    // if (position.z >= 269.0f) { //trigger to reach the end of the map
+    //     std::cout << "Skier has reached the finish line! Position: " << position.z << std::endl;
+    //     //reset player
+    //     position = Vector3(0.0f, 200.0f, 0.0f);
+    //     model.setTranslation(position.x, position.y, position.z);
+    //     current_speed = 0.0f;
+    //     velocity = Vector3(0.0f);
+    //     vertical_velocity = 0.0f;
 
-    }
+    // }
 
     //if 1 is pressed spawn the player in a specific position
     if (Input::isKeyPressed(SDL_SCANCODE_1)) {
@@ -363,6 +366,55 @@ void Player::update(float seconds_elapsed)
         uphill_timer = 0.0f; // Reset timer when not facing uphill
     }
 
+
+
+    /////////////////////////////////// ANIMATION STATE SYSTEM ///////////////////////////////////
+    // TODO: collisions animations
+    // if (animation_state != eAnimationState::JUMP) {
+        // if key W was pressed, play the impulse animation
+    if (is_grounded) {
+        if (velocity.length() > 0.0f) {
+            if (Input::isKeyPressed(SDL_SCANCODE_W)) {
+                if (animation_state != eAnimationState::IMPULSE) {
+                    animator.playAnimation("data/meshes/animations/impulse.skanim");
+                    animation_state = eAnimationState::IMPULSE;
+                }
+            } else if (Input::isKeyPressed(SDL_SCANCODE_S)) {
+                if (animation_state != eAnimationState::BRAKE) {
+                    animator.playAnimation("data/meshes/animations/brake.skanim");
+                    animation_state = eAnimationState::BRAKE;
+                }
+            } else {
+                if (animation_state != eAnimationState::MOVE) {
+                    animator.playAnimation("data/meshes/animations/move.skanim");
+                    animation_state = eAnimationState::MOVE;
+                }
+            }
+        } else if (velocity.length() == 0.0f) { // una vez arrancas nunca vuelve a ser 0 BUG
+            //celebrate animation
+            if (Input::isKeyPressed(SDL_SCANCODE_V)) {
+                if (animation_state != eAnimationState::CELEBRATE) {
+                    animator.playAnimation("data/meshes/animations/celebrate.skanim");
+                    animation_state = eAnimationState::CELEBRATE;
+                }
+            } else {
+                if (animation_state != eAnimationState::IDLE) {
+                    animator.playAnimation("data/meshes/animations/idle.skanim");
+                    animation_state = eAnimationState::IDLE;
+                }
+            }
+        }
+    } else if (!is_grounded) {
+        if (animation_state != eAnimationState::JUMP) {
+            animator.playAnimation("data/meshes/animations/fall.skanim");
+            animation_state = eAnimationState::JUMP;
+        }
+    }
+    /////////////////////////////////// ANIMATION STATE SYSTEM ///////////////////////////////////
+
+
+
+
     //if player in the air make the player rotate
     if (!is_grounded) {
         if (Input::isKeyPressed(SDL_SCANCODE_SPACE)) {
@@ -371,6 +423,8 @@ void Player::update(float seconds_elapsed)
     }
 
 
+    //animations
+    animator.update(seconds_elapsed);
 
     EntityMesh::update(seconds_elapsed);
 }

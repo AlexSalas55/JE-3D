@@ -27,9 +27,12 @@ World::World() {
 
     // Create and setup player
     Material player_material;
-    player_material.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+    // player_material.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+    player_material.shader = Shader::Get("data/shaders/skinning.vs", "data/shaders/texture.fs");
 	player_material.diffuse = Texture::Get("data/meshes/playerColor.png");
-    player = new Player(Mesh::Get("data/meshes/soldier.obj"), player_material, "player");
+    // player = new Player(Mesh::Get("data/meshes/soldier.obj"), player_material, "player");
+    player = new Player(Mesh::Get("data/meshes/player.mesh"), player_material, "player");
+
     //player->model.setTranslation(240.0f, 200.0f, -10.0f); //mapa pepino
     //player->model.setTranslation(20.0f, 250.0f, 0.0f); //old map
     //player->model.setTranslation(0.0f, 200.0f, 0.0f); //mapa pepino
@@ -55,9 +58,9 @@ World::World() {
             Texture::Get("data/textures/heightmap.png")
         };
 
-        EntityMesh* heightmap = new EntityMesh(heightmap_mesh, heightmap_material);
-        heightmap->model.translate(-size * 0.5f, 0.0f, -size * 0.5f);
-        root->addChild(heightmap);
+        // EntityMesh* heightmap = new EntityMesh(heightmap_mesh, heightmap_material);
+        // heightmap->model.translate(-size * 0.5f, 0.0f, -size * 0.5f);
+        // root->addChild(heightmap);
     }
     
     {
