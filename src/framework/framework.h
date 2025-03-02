@@ -63,6 +63,7 @@ public:
 Vector2 operator * (const Vector2& a, float v);
 Vector2 operator + (const Vector2& a, const Vector2& b);
 Vector2 operator - (const Vector2& a, const Vector2& b);
+Vector2 operator / (const Vector2& a, const Vector2& b);
 
 Vector2 normalize(Vector2 n);
 inline Vector2 lerp(const Vector2& a, const Vector2& b, float v) { return a*(1.0f - v) + b*v; }
@@ -217,6 +218,8 @@ inline Vector4ub lerp(const Vector4ub& a, const Vector4ub& b, float v) { return 
 
 typedef Vector4ub Color;
 
+class Quaternion;
+
 //****************************
 //Matrix44 class
 class Matrix44
@@ -245,7 +248,7 @@ class Matrix44
 		void clear();
 		void setIdentity();
 		void transpose();
-		void normalizeAxis();
+		//void normalizeAxis();
 
 		//get base vectors
 		Vector3 rightVector() { return Vector3(m[0],m[1],m[2]); }
@@ -278,6 +281,8 @@ class Matrix44
 		void setTranslation(const Vector3& new_translation);
 		void setRotation( float angle_in_rad, const Vector3& axis );
 		void setScale(float x, float y, float z);
+		void decompose(Vector3& translation, Quaternion& rotation, Vector3& scale);
+		void compose(const Vector3& translation, const Quaternion& rotation, const Vector3& scale);
 
 		Vector3 getTranslation() const;
 
@@ -290,6 +295,8 @@ class Matrix44
 		void ortho(float left, float right, float bottom, float top, float near_plane, float far_plane);
 
 		Vector3 project(const Vector3& v);
+
+		void toQuaternion(Quaternion&) const;
 
 		//old fixed pipeline (do not used if possible)
 		void multGL();
@@ -403,10 +410,10 @@ public:
 float DotProduct(const Quaternion &q1, const Quaternion &q2);
 Quaternion Qlerp(const Quaternion &q1, const Quaternion &q2, float t);
 Quaternion Qslerp(const Quaternion &q1, const Quaternion &q2, float t);
-Quaternion Qsquad(const Quaternion &q1, const Quaternion &q2, const Quaternion &a, const Quaternion &b, float t);
-Quaternion Qsquad(const Quaternion &q1, const Quaternion &q2, const Quaternion &a, float t);
-Quaternion Qspline(const Quaternion &q1, const Quaternion &q2, const Quaternion &q3);
-Quaternion QslerpNoInvert(const Quaternion &q1, const Quaternion &q2, float t);
+// Quaternion Qsquad(const Quaternion &q1, const Quaternion &q2, const Quaternion &a, const Quaternion &b, float t);
+// Quaternion Qsquad(const Quaternion &q1, const Quaternion &q2, const Quaternion &a, float t);
+// Quaternion Qspline(const Quaternion &q1, const Quaternion &q2, const Quaternion &q3);
+// Quaternion QslerpNoInvert(const Quaternion &q1, const Quaternion &q2, float t);
 Quaternion Qexp(const Quaternion &q);
 Quaternion Qlog(const Quaternion &q);
 Quaternion SimpleRotation(const Vector3 &a, const Vector3 &b);
