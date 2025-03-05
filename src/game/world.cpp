@@ -242,11 +242,10 @@ void World::update(double seconds_elapsed) {
         }
 
         camera->lookAt(eye, center, Vector3(0, 1, 0));
-        
         // Handle camera for player 2 in multiplayer mode
         if (Game::instance->multiplayer_enabled && player2) {
-            // Limit pitch for player 2
-            camera2_pitch = clamp(camera2_pitch, -M_PI * 0.4f, M_PI * 0.4f);
+            // Use the same camera pitch as player 1 for consistent behavior
+            camera2_pitch = camera_pitch;
             
             Matrix44 mYaw2;
             mYaw2.setRotation(camera2_yaw, Vector3(0, 1, 0));

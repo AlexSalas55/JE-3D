@@ -150,10 +150,20 @@ void Player::update(float seconds_elapsed)
                 target_camera_angle = clamp(target_camera_angle, 0.45f, 5.0f);
                 //Smooth interpolation
                 float camera_smooth_factor = 0.01f;
-                //Interpolation between  camera pitch and target camera angle
+                //Interpolation between camera pitch and target camera angle
                 float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
                 //Update camera pitch
                 World::get_instance()->camera_pitch = camera_angle;
+                
+                // Also update Player 2's camera pitch if this is Player 1
+                if (this == World::get_instance()->player) {
+                    World::get_instance()->camera2_pitch = camera_angle;
+                }
+                
+                // Also update Player 2's camera pitch if this is Player 1
+                if (this == World::get_instance()->player) {
+                    World::get_instance()->camera2_pitch = camera_angle;
+                }
 
             } else if (slope_factor < 0) { //Uphill Deceleration
                 current_acceleration -= uphill_deceleration * abs(slope_factor);
@@ -216,10 +226,20 @@ void Player::update(float seconds_elapsed)
                 target_camera_angle = clamp(target_camera_angle, 0.015f, 5.0f);
                 //Smooth interpolation
                 float camera_smooth_factor = 0.01f;
-                //Interpolation between  camera pitch and target camera angle
+                //Interpolation between camera pitch and target camera angle
                 float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
                 //Update camera pitch
                 World::get_instance()->camera_pitch = camera_angle;
+                
+                // Also update Player 2's camera pitch if this is Player 1
+                if (this == World::get_instance()->player) {
+                    World::get_instance()->camera2_pitch = camera_angle;
+                }
+                
+                // Also update Player 2's camera pitch if this is Player 1
+                if (this == World::get_instance()->player) {
+                    World::get_instance()->camera2_pitch = camera_angle;
+                }
             }
 
 
@@ -292,6 +312,11 @@ void Player::update(float seconds_elapsed)
         float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
         //Update camera pitch
         World::get_instance()->camera_pitch = camera_angle;
+        
+        // Also update Player 2's camera pitch if this is Player 1
+        if (this == World::get_instance()->player) {
+            World::get_instance()->camera2_pitch = camera_angle;
+        }
     }
     //Update position and check collisions
     Vector3 desired_position = position + velocity * seconds_elapsed;
@@ -332,6 +357,11 @@ void Player::update(float seconds_elapsed)
         float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
         //Update camera pitch
         World::get_instance()->camera_pitch = camera_angle;
+        
+        // Also update Player 2's camera pitch if this is Player 1
+        if (this == World::get_instance()->player) {
+            World::get_instance()->camera2_pitch = camera_angle;
+        }
 
         if (uphill_timer > 0.3f && !Input::isKeyPressed(SDL_SCANCODE_W)) {
             // Skier is facing uphill for more than 2 seconds -> apply extra deceleration
