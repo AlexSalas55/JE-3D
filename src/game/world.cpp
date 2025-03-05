@@ -195,22 +195,21 @@ void World::update(double seconds_elapsed) {
         player->update(seconds_elapsed);
         
         if (Game::instance->multiplayer_enabled && player2) {
-            // Handle Player 2 controls (UHJK)
-            if (Input::isKeyPressed(SDL_SCANCODE_J))
+            // Handle Player 2 controls (H and K for camera rotation)
+            if (Input::isKeyPressed(SDL_SCANCODE_H))
                 camera2_yaw -= seconds_elapsed * rotation_speed;
-            if (Input::isKeyPressed(SDL_SCANCODE_L))
-                camera2_yaw += seconds_elapsed * rotation_speed;
             if (Input::isKeyPressed(SDL_SCANCODE_K))
-                camera2_pitch -= seconds_elapsed * rotation_speed;
+                camera2_yaw += seconds_elapsed * rotation_speed;
             if (Input::isKeyPressed(SDL_SCANCODE_I))
                 camera2_pitch += seconds_elapsed * rotation_speed;
+            if (Input::isKeyPressed(SDL_SCANCODE_J))
+                camera2_pitch -= seconds_elapsed * rotation_speed;
                 
             // Update Player 2
             player2->update(seconds_elapsed);
         }
 
-        // Reemplazar el control del ratón con las flechas
-        float rotation_speed = 1.5f; // Velocidad de rotación
+        // Player 1 camera controls with arrow keys
         if (Input::isKeyPressed(SDL_SCANCODE_LEFT))
             camera_yaw -= seconds_elapsed * rotation_speed;
         if (Input::isKeyPressed(SDL_SCANCODE_RIGHT))
@@ -222,7 +221,6 @@ void World::update(double seconds_elapsed) {
 
         // Mantener el pitch dentro de límites
         camera_pitch = clamp(camera_pitch, -M_PI * 0.4f, M_PI * 0.4f);
-
         Matrix44 mYaw;
         mYaw.setRotation(camera_yaw, Vector3(0, 1, 0));
         Matrix44 mPitch;

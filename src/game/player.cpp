@@ -56,7 +56,8 @@ void Player::render(Camera* camera)
 
 void Player::update(float seconds_elapsed)
 {
-    float camera_yaw = World::get_instance()->camera_yaw;
+    float camera_yaw = (this == World::get_instance()->player2) ? 
+        World::get_instance()->camera2_yaw : World::get_instance()->camera_yaw;
     Matrix44 mYaw;
     mYaw.setRotation(camera_yaw, Vector3(0, 1, 0));
     Vector3 front = mYaw.frontVector().normalize();
@@ -102,28 +103,29 @@ void Player::update(float seconds_elapsed)
 
     is_grounded = false;
 
-    //Find ground normal and update grounded state
+    // Find ground normal and update grounded state
     for (const sCollisionData& collision : ground_collisions) {
         float up_factor = collision.colNormal.dot(Vector3::UP);
         if (up_factor > slope_tolerance) {
             is_grounded = true;
             ground_normal = collision.colNormal;
-            position.y = collision.colPoint.y; // Snap Y to ground
+            position.y = collision.colPoint.y;
             break;
         }
     }
 
     if (is_grounded) {
-    //slope angle and direction
-    float slope_angle = acos(ground_normal.dot(Vector3::UP));
-    Vector3 slope_direction = (Vector3::UP - ground_normal * (Vector3::UP.dot(ground_normal))).normalize();
+        float slope_angle = acos(ground_normal.dot(Vector3::UP));
+        Vector3 slope_direction = (Vector3::UP - ground_normal * (Vector3::UP.dot(ground_normal))).normalize();
 
         Vector3 move_direction(0.0f);
-        if (Input::isKeyPressed(SDL_SCANCODE_W)) move_direction.z = 1.0f;
-        //if (Input::isKeyPressed(SDL_SCANCODE_S)) move_direction.z = -1.0f;
-        //if (Input::isKeyPressed(SDL_SCANCODE_A)) move_direction.x = -1.0f;
-        //if (Input::isKeyPressed(SDL_SCANCODE_D)) move_direction.x = 1.0f;
-    
+        // Different movement controls for each player
+        if (this == World::get_instance()->player2) {
+            if (Input::isKeyPressed(SDL_SCANCODE_U)) move_direction.z = 1.0f;
+        } else {
+            if (Input::isKeyPressed(SDL_SCANCODE_W)) move_direction.z = 1.0f;
+        }
+
         if (move_direction.length() > 0.01f) {
             //move based on user input
             move_direction.normalize();
