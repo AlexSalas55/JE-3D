@@ -406,33 +406,67 @@ void Player::update(float seconds_elapsed)
         // if key W was pressed, play the impulse animation
     if (is_grounded) {
         if (velocity.length() > 0.0f) {
-            if (Input::isKeyPressed(SDL_SCANCODE_W)) {
-                if (animation_state != eAnimationState::IMPULSE) {
-                    animator.playAnimation("data/meshes/animations/impulse.skanim");
-                    animation_state = eAnimationState::IMPULSE;
+            // Check if this is player2 and handle its controls
+            if (this == World::get_instance()->player2) {
+                if (Input::isKeyPressed(SDL_SCANCODE_U)) {
+                    if (animation_state != eAnimationState::IMPULSE) {
+                        animator.playAnimation("data/meshes/animations/impulse.skanim");
+                        animation_state = eAnimationState::IMPULSE;
+                    }
+                } else if (Input::isKeyPressed(SDL_SCANCODE_J)) {
+                    if (animation_state != eAnimationState::BRAKE) {
+                        animator.playAnimation("data/meshes/animations/brake.skanim");
+                        animation_state = eAnimationState::BRAKE;
+                    }
+                } else {
+                    if (animation_state != eAnimationState::MOVE) {
+                        animator.playAnimation("data/meshes/animations/move.skanim");
+                        animation_state = eAnimationState::MOVE;
+                    }
                 }
-            } else if (Input::isKeyPressed(SDL_SCANCODE_S)) {
-                if (animation_state != eAnimationState::BRAKE) {
-                    animator.playAnimation("data/meshes/animations/brake.skanim");
-                    animation_state = eAnimationState::BRAKE;
-                }
-            } else {
-                if (animation_state != eAnimationState::MOVE) {
-                    animator.playAnimation("data/meshes/animations/move.skanim");
-                    animation_state = eAnimationState::MOVE;
+            } else { // Player 1 controls
+                if (Input::isKeyPressed(SDL_SCANCODE_W)) {
+                    if (animation_state != eAnimationState::IMPULSE) {
+                        animator.playAnimation("data/meshes/animations/impulse.skanim");
+                        animation_state = eAnimationState::IMPULSE;
+                    }
+                } else if (Input::isKeyPressed(SDL_SCANCODE_S)) {
+                    if (animation_state != eAnimationState::BRAKE) {
+                        animator.playAnimation("data/meshes/animations/brake.skanim");
+                        animation_state = eAnimationState::BRAKE;
+                    }
+                } else {
+                    if (animation_state != eAnimationState::MOVE) {
+                        animator.playAnimation("data/meshes/animations/move.skanim");
+                        animation_state = eAnimationState::MOVE;
+                    }
                 }
             }
-        } else if (velocity.length() == 0.0f) { // una vez arrancas nunca vuelve a ser 0 BUG
-            //celebrate animation
-            if (Input::isKeyPressed(SDL_SCANCODE_V)) {
-                if (animation_state != eAnimationState::CELEBRATE) {
-                    animator.playAnimation("data/meshes/animations/celebrate.skanim");
-                    animation_state = eAnimationState::CELEBRATE;
+        } else if (velocity.length() == 0.0f) {
+            // Celebrate animation with different keys for each player
+            if (this == World::get_instance()->player2) {
+                if (Input::isKeyPressed(SDL_SCANCODE_M)) {
+                    if (animation_state != eAnimationState::CELEBRATE) {
+                        animator.playAnimation("data/meshes/animations/celebrate.skanim");
+                        animation_state = eAnimationState::CELEBRATE;
+                    }
+                } else {
+                    if (animation_state != eAnimationState::IDLE) {
+                        animator.playAnimation("data/meshes/animations/idle.skanim");
+                        animation_state = eAnimationState::IDLE;
+                    }
                 }
-            } else {
-                if (animation_state != eAnimationState::IDLE) {
-                    animator.playAnimation("data/meshes/animations/idle.skanim");
-                    animation_state = eAnimationState::IDLE;
+            } else { // Player 1
+                if (Input::isKeyPressed(SDL_SCANCODE_V)) {
+                    if (animation_state != eAnimationState::CELEBRATE) {
+                        animator.playAnimation("data/meshes/animations/celebrate.skanim");
+                        animation_state = eAnimationState::CELEBRATE;
+                    }
+                } else {
+                    if (animation_state != eAnimationState::IDLE) {
+                        animator.playAnimation("data/meshes/animations/idle.skanim");
+                        animation_state = eAnimationState::IDLE;
+                    }
                 }
             }
         }
