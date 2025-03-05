@@ -33,7 +33,6 @@ void PlayStage::update(double seconds_elapsed) {
 }
 
 void PlayStage::onKeyDown(SDL_KeyboardEvent event) {
-    // Handle key events specific to play stage
     if (event.keysym.scancode == SDL_SCANCODE_P) {
         Game* game = Game::instance;
         World* world = World::get_instance();
@@ -47,8 +46,23 @@ void PlayStage::onKeyDown(SDL_KeyboardEvent event) {
             player_material.shader = Shader::Get("data/shaders/skinning.vs", "data/shaders/texture.fs");
             player_material.diffuse = Texture::Get("data/meshes/playerColor.png");
             
-            world->player2 = new Player(Mesh::Get("data/meshes/player.mesh"), player_material, "player2");
+            // Create player2 with the same mesh as player1 to ensure skeleton compatibility
+            Mesh* player_mesh = world->player->mesh;
+            world->player2 = new Player(player_mesh, player_material, "player2");
             world->player2->model.setTranslation(5.0f, 200.0f, 0.0f);
+            
+            // Ensure animations are properly initialized before adding to scene
+            world->player2->isAnimated = world->player->isAnimated;
+            
+            // Initialize animation with the same state as player1
+            Animation* currentAnim = world->player->animator.getCurrentAnimation();
+            if (currentAnim) {
+                world->player2->animator.playAnimation(currentAnim->name.c_str(), true);
+            } else {
+                world->player2->animator.playAnimation("data/meshes/animations/idle.skanim", true);
+            }
+            
+            // Add to scene after full initialization
             world->root->addChild(world->player2);
             
             game->camera2 = new Camera();
@@ -57,12 +71,14 @@ void PlayStage::onKeyDown(SDL_KeyboardEvent event) {
 
             // Create skybox2 for player 2
             if (!world->skybox2) {
-                // Reuse the same material as skybox1
                 world->skybox2 = new EntityMesh(Mesh::Get("data/meshes/cubemap.ASE"), world->skybox->material);
             }
         } else {
             // Clean up player 2 and its camera
             if (world->player2) {
+                // Stop any ongoing animations first
+                world->player2->animator.stopAnimation();
+                
                 Player* temp_player = world->player2;
                 world->player2 = nullptr;  // Set to null first to avoid any potential access
                 world->root->removeChild(temp_player);
@@ -70,13 +86,12 @@ void PlayStage::onKeyDown(SDL_KeyboardEvent event) {
             }
             if (game->camera2) {
                 Camera* temp_camera = game->camera2;
-                game->camera2 = nullptr;  // Set to null first to avoid any potential access
+                game->camera2 = nullptr;
                 delete temp_camera;
             }
-            // Clean up skybox2
             if (world->skybox2) {
                 EntityMesh* temp_skybox = world->skybox2;
-                world->skybox2 = nullptr;  // Set to null first to avoid any potential access
+                world->skybox2 = nullptr;
                 delete temp_skybox;
             }
         }

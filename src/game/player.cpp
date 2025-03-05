@@ -12,13 +12,17 @@ Player::Player(Mesh* mesh, const Material& material, const std::string& name)
 {
     this->name = name;
     walk_speed = 5.0f;
-    //last_acceleration_time = 0.0f;
-
     // Animations
     isAnimated = true;
-    animator.playAnimation("data/meshes/animations/idle.skanim", true);
-
-    // Create sword for player
+    
+    // Initialize animator with idle animation but don't play it yet
+    // This ensures the skeleton is properly initialized
+    Animation* idle = Animation::Get("data/meshes/animations/idle.skanim");
+    if (idle) {
+        animator.playAnimation("data/meshes/animations/idle.skanim", true);
+    }
+    
+    // Create sword for player (commented out for now)
     /*sword = new EntityMesh(Mesh::Get("data/meshes/sword.obj"), material);
     addChild(sword);*/
 }
