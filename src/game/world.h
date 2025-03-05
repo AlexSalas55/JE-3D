@@ -24,6 +24,7 @@ public:
 	
     Entity* root = nullptr;
     EntityMesh* skybox = nullptr;
+    EntityMesh* skybox2 = nullptr;  // Second skybox for player 2
     Player* player = nullptr;
     Player* player2 = nullptr;  // Second player for multiplayer
     Camera* camera;      // 3D camera for player 1

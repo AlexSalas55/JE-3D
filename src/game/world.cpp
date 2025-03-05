@@ -68,7 +68,7 @@ World::World() {
     }
     
     {
-        // Create skybox environment
+        // Create skybox environment for player 1
         Texture* cube_texture = new Texture();
         cube_texture->loadCubemap("landscape", {
             "data/textures/skybox/right.png",
@@ -86,6 +86,11 @@ World::World() {
         skybox = new EntityMesh(Mesh::Get("data/meshes/cubemap.ASE"), cubemap_material);
         // skybox->model.scale(5000.0f, 5000.0f, 5000.0f); //Para escalar el mapa? TODO
 
+        // Create second skybox for player 2 (if multiplayer is enabled)
+        if (Game::instance->multiplayer_enabled) {
+            // We can reuse the same texture and material for the second skybox
+            skybox2 = new EntityMesh(Mesh::Get("data/meshes/cubemap.ASE"), cubemap_material);
+        }
     }
 
     //timer
@@ -100,15 +105,17 @@ World::World() {
 void World::render() {
     // Determine which camera to use based on viewport
     Camera* current_camera = camera;
+    EntityMesh* current_skybox = skybox;
     
-    // If in multiplayer mode and rendering the right viewport, use camera2
+    // If in multiplayer mode and rendering the right viewport, use camera2 and skybox2
     if (Game::instance->multiplayer_enabled) {
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
         
-        // If this is the right viewport (x > 0), use camera2
+        // If this is the right viewport (x > 0), use camera2 and skybox2
         if (viewport[0] > 0 && Game::instance->camera2) {
             current_camera = Game::instance->camera2;
+            current_skybox = skybox2;
         }
     }
     
@@ -119,8 +126,8 @@ void World::render() {
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
     
-    if(skybox)
-       skybox->render(current_camera);
+    if(current_skybox)
+       current_skybox->render(current_camera);
     
     glEnable(GL_DEPTH_TEST);
     
@@ -264,8 +271,13 @@ void World::update(double seconds_elapsed) {
         }
     }
 
-    // move skybox to player
+    // move skybox to follow player 1's camera
     skybox->model.setTranslation(camera->eye);
+    
+    // move skybox2 to follow player 2's camera if multiplayer is enabled
+    if (Game::instance->multiplayer_enabled && skybox2 && Game::instance->camera2) {
+        skybox2->model.setTranslation(Game::instance->camera2->eye);
+    }
 
     // Delete pending entities
     for (Entity* entity : entities_to_destroy) {
