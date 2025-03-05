@@ -96,7 +96,7 @@ void Game::doFrame(void)
 	// Clear the window and the depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (multiplayer_enabled)
+	if (multiplayer_enabled && camera2 && World::get_instance()->player2)
 	{
 		// Left viewport (Player 1)
 		glViewport(0, 0, window_width/2, window_height);

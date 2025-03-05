@@ -230,14 +230,12 @@ void Player::update(float seconds_elapsed)
                 float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
                 //Update camera pitch
                 World::get_instance()->camera_pitch = camera_angle;
-                
-                // Also update Player 2's camera pitch if this is Player 1
+                // Only update Player 2's camera pitch if this is Player 1
                 if (this == World::get_instance()->player) {
                     World::get_instance()->camera2_pitch = camera_angle;
                 }
-                
-                // Also update Player 2's camera pitch if this is Player 1
-                if (this == World::get_instance()->player) {
+                // Only update Player 2's camera pitch if this is Player 1
+                if (this == World::get_instance()->player && Game::instance->multiplayer_enabled) {
                     World::get_instance()->camera2_pitch = camera_angle;
                 }
             }
@@ -254,6 +252,10 @@ void Player::update(float seconds_elapsed)
             float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
             //Update camera pitch
             World::get_instance()->camera_pitch = camera_angle;
+            // Only update Player 2's camera pitch if multiplayer is enabled
+                if (this == World::get_instance()->player && Game::instance->multiplayer_enabled) {
+                    World::get_instance()->camera2_pitch = camera_angle;
+                }
 
             //Normalize velocity to current speed
             if (velocity.length() > 0) {
@@ -312,8 +314,7 @@ void Player::update(float seconds_elapsed)
         float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
         //Update camera pitch
         World::get_instance()->camera_pitch = camera_angle;
-        
-        // Also update Player 2's camera pitch if this is Player 1
+        // Only update Player 2's camera pitch if this is Player 1
         if (this == World::get_instance()->player) {
             World::get_instance()->camera2_pitch = camera_angle;
         }
@@ -357,12 +358,10 @@ void Player::update(float seconds_elapsed)
         float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
         //Update camera pitch
         World::get_instance()->camera_pitch = camera_angle;
-        
-        // Also update Player 2's camera pitch if this is Player 1
-        if (this == World::get_instance()->player) {
-            World::get_instance()->camera2_pitch = camera_angle;
-        }
-
+        // Only update Player 2's camera pitch if multiplayer is enabled
+                if (this == World::get_instance()->player && Game::instance->multiplayer_enabled) {
+                    World::get_instance()->camera2_pitch = camera_angle;
+                }
         if (uphill_timer > 0.3f && !Input::isKeyPressed(SDL_SCANCODE_W)) {
             // Skier is facing uphill for more than 2 seconds -> apply extra deceleration
             //this works but doesnt stop it

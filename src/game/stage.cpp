@@ -1,6 +1,7 @@
 #include "stage.h"
 #include "world.h"
 #include "game.h"
+#include "player.h"
 #include "framework/ui.h"
 #include "framework/entities/entity.h"
 #include "framework/entities/entityMesh.h"
@@ -33,6 +34,53 @@ void PlayStage::update(double seconds_elapsed) {
 
 void PlayStage::onKeyDown(SDL_KeyboardEvent event) {
     // Handle key events specific to play stage
+    if (event.keysym.scancode == SDL_SCANCODE_P) {
+        Game* game = Game::instance;
+        World* world = World::get_instance();
+        
+        // Toggle multiplayer mode
+        game->multiplayer_enabled = !game->multiplayer_enabled;
+        
+        if (game->multiplayer_enabled) {
+            // Create player 2 and its camera
+            Material player_material;
+            player_material.shader = Shader::Get("data/shaders/skinning.vs", "data/shaders/texture.fs");
+            player_material.diffuse = Texture::Get("data/meshes/playerColor.png");
+            
+            world->player2 = new Player(Mesh::Get("data/meshes/player.mesh"), player_material, "player2");
+            world->player2->model.setTranslation(5.0f, 200.0f, 0.0f);
+            world->root->addChild(world->player2);
+            
+            game->camera2 = new Camera();
+            game->camera2->lookAt(Vector3(0.f, 2.f, -5.f), Vector3(0.f, 0.f, 0.f), Vector3(0.f, 1.f, 0.f));
+            game->camera2->setPerspective(60.f, game->window_width/(float)game->window_height, 0.1f, 3000.f);
+
+            // Create skybox2 for player 2
+            if (!world->skybox2) {
+                // Reuse the same material as skybox1
+                world->skybox2 = new EntityMesh(Mesh::Get("data/meshes/cubemap.ASE"), world->skybox->material);
+            }
+        } else {
+            // Clean up player 2 and its camera
+            if (world->player2) {
+                Player* temp_player = world->player2;
+                world->player2 = nullptr;  // Set to null first to avoid any potential access
+                world->root->removeChild(temp_player);
+                delete temp_player;
+            }
+            if (game->camera2) {
+                Camera* temp_camera = game->camera2;
+                game->camera2 = nullptr;  // Set to null first to avoid any potential access
+                delete temp_camera;
+            }
+            // Clean up skybox2
+            if (world->skybox2) {
+                EntityMesh* temp_skybox = world->skybox2;
+                world->skybox2 = nullptr;  // Set to null first to avoid any potential access
+                delete temp_skybox;
+            }
+        }
+    }
 }
 
 void MenuStage::init() {
@@ -115,4 +163,4 @@ void MenuStage::update(double seconds_elapsed) {
 
 void MenuStage::onEnter(Stage* prev_stage) {
     Game::instance->setMouseLocked(false);
-} 
+}
