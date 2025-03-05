@@ -159,8 +159,8 @@ void mainLoop()
 		// Update game logic
 		game->update(elapsed_time);
 
-		// Render frame
-		game->render();
+		// Render frame using split-screen capable method
+		game->doFrame();
 
 		// Check errors in opengl only when working in debug
 		#ifdef _DEBUG

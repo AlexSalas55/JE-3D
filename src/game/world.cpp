@@ -32,16 +32,20 @@ World::World() {
 	player_material.diffuse = Texture::Get("data/meshes/playerColor.png");
     // player = new Player(Mesh::Get("data/meshes/soldier.obj"), player_material, "player");
     player = new Player(Mesh::Get("data/meshes/player.mesh"), player_material, "player");
-
-    //player->model.setTranslation(240.0f, 200.0f, -10.0f); //mapa pepino
-    //player->model.setTranslation(20.0f, 250.0f, 0.0f); //old map
-    //player->model.setTranslation(0.0f, 200.0f, 0.0f); //mapa pepino
-
     player->model.setTranslation(00.0f, 200.0f, 0.0f); //mapa pepino
-
-
-
     root->addChild(player);
+    
+    // Create second player for multiplayer
+    if (Game::instance->multiplayer_enabled) {
+        player2 = new Player(Mesh::Get("data/meshes/player.mesh"), player_material, "player2");
+        player2->model.setTranslation(5.0f, 200.0f, 0.0f); // Position player2 next to player1
+        root->addChild(player2);
+        
+        // Setup second camera
+        Game::instance->camera2 = new Camera();
+        Game::instance->camera2->lookAt(Vector3(0.f, 2.f, -5.f), Vector3(0.f, 0.f, 0.f), Vector3(0.f, 1.f, 0.f));
+        Game::instance->camera2->setPerspective(60.f, Game::instance->window_width/(float)Game::instance->window_height, 0.1f, 3000.f);
+    }
     
     {
         // Create heightmap
@@ -94,15 +98,29 @@ World::World() {
 }
 
 void World::render() {
+    // Determine which camera to use based on viewport
+    Camera* current_camera = camera;
+    
+    // If in multiplayer mode and rendering the right viewport, use camera2
+    if (Game::instance->multiplayer_enabled) {
+        int viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        
+        // If this is the right viewport (x > 0), use camera2
+        if (viewport[0] > 0 && Game::instance->camera2) {
+            current_camera = Game::instance->camera2;
+        }
+    }
+    
     // Set the camera as default
-    camera->enable();
+    current_camera->enable();
     
     glDisable(GL_BLEND);
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
     
     if(skybox)
-       skybox->render(camera);
+       skybox->render(current_camera);
     
     glEnable(GL_DEPTH_TEST);
     
@@ -110,7 +128,7 @@ void World::render() {
     drawGrid();
     
     // Render all scene tree
-    root->render(camera);
+    root->render(current_camera);
 }
 
 void World::update(double seconds_elapsed) {
@@ -173,8 +191,23 @@ void World::update(double seconds_elapsed) {
         camera->updateViewMatrix();
     }
     else {
-        // Update player first
+        // Update players
         player->update(seconds_elapsed);
+        
+        if (Game::instance->multiplayer_enabled && player2) {
+            // Handle Player 2 controls (UHJK)
+            if (Input::isKeyPressed(SDL_SCANCODE_J))
+                camera2_yaw -= seconds_elapsed * rotation_speed;
+            if (Input::isKeyPressed(SDL_SCANCODE_L))
+                camera2_yaw += seconds_elapsed * rotation_speed;
+            if (Input::isKeyPressed(SDL_SCANCODE_K))
+                camera2_pitch -= seconds_elapsed * rotation_speed;
+            if (Input::isKeyPressed(SDL_SCANCODE_I))
+                camera2_pitch += seconds_elapsed * rotation_speed;
+                
+            // Update Player 2
+            player2->update(seconds_elapsed);
+        }
 
         // Reemplazar el control del ratón con las flechas
         float rotation_speed = 1.5f; // Velocidad de rotación
@@ -211,6 +244,27 @@ void World::update(double seconds_elapsed) {
         }
 
         camera->lookAt(eye, center, Vector3(0, 1, 0));
+        
+        // Handle camera for player 2 in multiplayer mode
+        if (Game::instance->multiplayer_enabled && player2) {
+            // Limit pitch for player 2
+            camera2_pitch = clamp(camera2_pitch, -M_PI * 0.4f, M_PI * 0.4f);
+            
+            Matrix44 mYaw2;
+            mYaw2.setRotation(camera2_yaw, Vector3(0, 1, 0));
+            Matrix44 mPitch2;
+            mPitch2.setRotation(camera2_pitch, Vector3(-1, 0, 0));
+            
+            Vector3 front2 = (mPitch2 * mYaw2).frontVector().normalize();
+            Vector3 player2_pos = player2->model.getTranslation();
+            
+            // Third-person camera for player 2
+            float orbit_dist2 = 6.0f;
+            eye2 = player2_pos - front2 * orbit_dist2 + Vector3(0.0f, 1.5f, 0.0f);
+            center2 = player2_pos + Vector3(0.f, 0.8f, 0.0f);
+            
+            Game::instance->camera2->lookAt(eye2, center2, Vector3(0, 1, 0));
+        }
     }
 
     // move skybox to player

@@ -25,10 +25,17 @@ public:
     Entity* root = nullptr;
     EntityMesh* skybox = nullptr;
     Player* player = nullptr;
-    Camera* camera;      // 3D camera
+    Player* player2 = nullptr;  // Second player for multiplayer
+    Camera* camera;      // 3D camera for player 1
     Camera* camera2D;    // 2D camera for UI
     Vector3 eye;
     Vector3 center;
+    
+    // Player 2 camera variables
+    float camera2_yaw = 0.f;
+    float camera2_pitch = 0.f;
+    Vector3 eye2;       // Camera position for player 2
+    Vector3 center2;    // Look-at point for player 2
 
     double time = 0.f;
     float camera_yaw = 0.f;
@@ -37,6 +44,7 @@ public:
     float mouse_speed = 0.25f;
     bool free_camera = false;
     bool use_first_person = false;
+    float rotation_speed = 2.0f;
     
     float sphere_radius = 0.8f;
     float sphere_grow = .3f;
@@ -58,4 +66,4 @@ public:
 	// Collision detection
 	sCollisionData raycast(const Vector3& origin, const Vector3& direction, int layer = eCollisionFilter::ALL, bool closest = true, float max_ray_dist = 100000);
     void test_scene_collisions(const Vector3& target_position, std::vector<sCollisionData>& collisions, std::vector<sCollisionData>& ground_collisions, eCollisionFilter filter);
-}; 
+};

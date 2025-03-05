@@ -29,7 +29,9 @@ public:
 
 	//some vars
 	Camera* camera; //our global camera
+	Camera* camera2; //second player camera
 	bool mouse_locked; //tells if the mouse is locked (not seen)
+	bool multiplayer_enabled = true; //flag for split-screen mode
 
 	// Stage management
 	std::map<uint8_t, Stage*> stages;
@@ -40,6 +42,7 @@ public:
 
 	//main functions
 	void render( void );
+	void doFrame( void ); //new method for split-screen rendering
 	void update( double dt );
 
 	void setMouseLocked(bool must_lock);

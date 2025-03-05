@@ -79,12 +79,6 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 
 void Game::render(void)
 {
-	// Set the clear color (the background color)
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-
-	// Clear the window and the depth buffer
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	if (current_stage)
 	{
 		current_stage->render();
@@ -92,6 +86,32 @@ void Game::render(void)
 
 	// Render the FPS, Draw Calls, etc
 	drawText(2, 2, getGPUStats(), Vector3(1, 1, 1), 2);
+}
+
+void Game::doFrame(void)
+{
+	// Set the clear color (the background color)
+	glClearColor(0.0, 0.0, 0.0, 1.0);
+
+	// Clear the window and the depth buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	if (multiplayer_enabled)
+	{
+		// Left viewport (Player 1)
+		glViewport(0, 0, window_width/2, window_height);
+		render();
+
+		// Right viewport (Player 2)
+		glViewport(window_width/2, 0, window_width/2, window_height);
+		render();
+	}
+	else
+	{
+		// Full viewport for single player
+		glViewport(0, 0, window_width, window_height);
+		render();
+	}
 
 	// Swap between front buffer and back buffer
 	SDL_GL_SwapWindow(this->window);
