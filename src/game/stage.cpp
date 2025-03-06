@@ -198,8 +198,8 @@ void MenuStage::update(double seconds_elapsed) {
     float width = Game::instance->window_width;
     float height = Game::instance->window_height;
     
-    const float BUTTON_WIDTH = 190.0f;
-    const float BUTTON_HEIGHT = 49.0f;
+    const float BUTTON_WIDTH = 160.0f;
+    const float BUTTON_HEIGHT = BUTTON_WIDTH / (16.0f/9.0f);
     float center_x = width * 0.5f;
     
     float play_y = height * 0.55f;
