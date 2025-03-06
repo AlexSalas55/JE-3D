@@ -102,7 +102,7 @@ void MenuStage::init() {
     int width = Game::instance->window_width;
     int height = Game::instance->window_height;
 
-    // Create background
+    // Background
     Material background_mat;
     background_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
     background_mat.diffuse = Texture::Get("data/textures/ui/menu.png");
@@ -113,7 +113,22 @@ void MenuStage::init() {
     background->mesh->createQuad(width * 0.5f, height * 0.5f, width, height, true);
     background->material = background_mat;
 
-    // Create play button
+    const float BUTTON_WIDTH = 160.0f;
+    const float BUTTON_HEIGHT = BUTTON_WIDTH / (16.0f/9.0f);
+
+    // Logo
+    Material logo_mat;
+    logo_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+    logo_mat.diffuse = Texture::Get("data/textures/ui/logo.png");
+    logo_mat.color = Vector4(1,1,1,1);
+    
+    logo = new EntityMesh();
+    logo->mesh = new Mesh();
+    float logo_size = height * 0.35f;
+    logo->mesh->createQuad(width * 0.5f, height * 0.3f, logo_size, logo_size, true);
+    logo->material = logo_mat;
+
+    // Play button
     Material play_mat;
     play_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
     play_mat.diffuse = Texture::Get("data/textures/ui/play_button.png");
@@ -121,10 +136,21 @@ void MenuStage::init() {
     
     play_button = new EntityMesh();
     play_button->mesh = new Mesh();
-    play_button->mesh->createQuad(width * 0.5f, 450, 190, 49, true);
+    play_button->mesh->createQuad(width * 0.5f, height * 0.55f, BUTTON_WIDTH, BUTTON_HEIGHT, true);
     play_button->material = play_mat;
 
-    // Create exit button
+    // Training button
+    Material training_mat;
+    training_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+    training_mat.diffuse = Texture::Get("data/textures/ui/training_button.png");
+    training_mat.color = Vector4(1,1,1,1);
+    
+    training_button = new EntityMesh();
+    training_button->mesh = new Mesh();
+    training_button->mesh->createQuad(width * 0.5f, height * 0.7f, BUTTON_WIDTH, BUTTON_HEIGHT, true);
+    training_button->material = training_mat;
+
+    // Exit button
     Material exit_mat;
     exit_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
     exit_mat.diffuse = Texture::Get("data/textures/ui/exit_button.png");
@@ -132,25 +158,24 @@ void MenuStage::init() {
     
     exit_button = new EntityMesh();
     exit_button->mesh = new Mesh();
-    exit_button->mesh->createQuad(width * 0.5f, 520, 190, 49, true);
+    exit_button->mesh->createQuad(width * 0.5f, height * 0.85f, BUTTON_WIDTH, BUTTON_HEIGHT, true);
     exit_button->material = exit_mat;
 
+    background->addChild(logo);
     background->addChild(play_button);
+    background->addChild(training_button);
     background->addChild(exit_button);
 }
 
 void MenuStage::render() {
-    // Disable depth testing for 2D rendering
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // Use 2D camera for menu
     Camera* camera2D = World::get_instance()->camera2D;
     background->render(camera2D);
 
-    // Restore OpenGL state
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
@@ -158,19 +183,56 @@ void MenuStage::render() {
 
 void MenuStage::update(double seconds_elapsed) {
     Vector2 mouse_pos = Input::mouse_position;
+    float width = Game::instance->window_width;
+    float height = Game::instance->window_height;
     
-    // Check if mouse is over play button
-    float play_x = Game::instance->window_width * 0.5f;
-    float play_y = 450;
+    const float BUTTON_WIDTH = 190.0f;
+    const float BUTTON_HEIGHT = 49.0f;
+    float center_x = width * 0.5f;
     
-    if (mouse_pos.x > (play_x - 95) && mouse_pos.x < (play_x + 95) &&
-        mouse_pos.y > (play_y - 24.5f) && mouse_pos.y < (play_y + 24.5f)) {
+    float play_y = height * 0.55f;
+    bool mouse_over_play = mouse_pos.x >= (center_x - BUTTON_WIDTH/2) && 
+                          mouse_pos.x <= (center_x + BUTTON_WIDTH/2) &&
+                          mouse_pos.y >= (play_y - BUTTON_HEIGHT/2) && 
+                          mouse_pos.y <= (play_y + BUTTON_HEIGHT/2);
+    
+    float training_y = height * 0.7f;
+    bool mouse_over_training = mouse_pos.x >= (center_x - BUTTON_WIDTH/2) && 
+                              mouse_pos.x <= (center_x + BUTTON_WIDTH/2) &&
+                              mouse_pos.y >= (training_y - BUTTON_HEIGHT/2) && 
+                              mouse_pos.y <= (training_y + BUTTON_HEIGHT/2);
+    
+    float exit_y = height * 0.85f;
+    bool mouse_over_exit = mouse_pos.x >= (center_x - BUTTON_WIDTH/2) && 
+                          mouse_pos.x <= (center_x + BUTTON_WIDTH/2) &&
+                          mouse_pos.y >= (exit_y - BUTTON_HEIGHT/2) && 
+                          mouse_pos.y <= (exit_y + BUTTON_HEIGHT/2);
+    
+    if (mouse_over_play) {
         play_button->material.color = Vector4::WHITE * 2.0f;
         if (Input::wasMousePressed(SDL_BUTTON_LEFT)) {
             Game::instance->goToStage(STAGE_PLAY);
         }
     } else {
         play_button->material.color = Vector4::WHITE;
+    }
+    
+    if (mouse_over_training) {
+        training_button->material.color = Vector4::WHITE * 2.0f;
+        if (Input::wasMousePressed(SDL_BUTTON_LEFT)) {
+            Game::instance->goToStage(STAGE_PLAY);
+        }
+    } else {
+        training_button->material.color = Vector4::WHITE;
+    }
+    
+    if (mouse_over_exit) {
+        exit_button->material.color = Vector4::WHITE * 2.0f;
+        if (Input::wasMousePressed(SDL_BUTTON_LEFT)) {
+            Game::instance->must_exit = true;
+        }
+    } else {
+        exit_button->material.color = Vector4::WHITE;
     }
     
     background->update(seconds_elapsed);

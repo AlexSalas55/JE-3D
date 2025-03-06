@@ -41,7 +41,9 @@ public:
 
 private:
     EntityMesh* background;
+    EntityMesh* logo;
     EntityMesh* play_button;
+    EntityMesh* training_button;
     EntityMesh* exit_button;
 };
 

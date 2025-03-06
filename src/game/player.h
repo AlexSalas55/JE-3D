@@ -54,6 +54,7 @@ class Player : public EntityMesh {
     float rotation_smoothing = 0.2f;    //Controls how fast the player aligns with slope
     float min_rotation_angle = 0.01f;   //Minimum angle for rotation to occur
     float min_movement_speed = 0.1f;    //Minimum speed for direction-based rotation
+    float camera_angle = 0.0f;          //Camera pitch angle for slope-based camera adjustments
     
 
 public:
