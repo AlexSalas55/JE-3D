@@ -132,6 +132,7 @@ void MenuStage::init() {
     Material play_mat;
     play_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
     play_mat.diffuse = Texture::Get("data/textures/ui/play_button.png");
+    Texture* play_hover = Texture::Get("data/textures/ui/play_button_hover.png");
     play_mat.color = Vector4(1,1,1,1);
     
     play_button = new EntityMesh();
@@ -143,6 +144,7 @@ void MenuStage::init() {
     Material training_mat;
     training_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
     training_mat.diffuse = Texture::Get("data/textures/ui/training_button.png");
+    Texture* training_hover = Texture::Get("data/textures/ui/training_button_hover.png");
     training_mat.color = Vector4(1,1,1,1);
     
     training_button = new EntityMesh();
@@ -154,12 +156,22 @@ void MenuStage::init() {
     Material exit_mat;
     exit_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
     exit_mat.diffuse = Texture::Get("data/textures/ui/exit_button.png");
+    Texture* exit_hover = Texture::Get("data/textures/ui/exit_button_hover.png");
     exit_mat.color = Vector4(1,1,1,1);
     
     exit_button = new EntityMesh();
     exit_button->mesh = new Mesh();
     exit_button->mesh->createQuad(width * 0.5f, height * 0.85f, BUTTON_WIDTH, BUTTON_HEIGHT, true);
     exit_button->material = exit_mat;
+
+    // Guardar las texturas normales y hover
+    play_normal = play_mat.diffuse;
+    training_normal = training_mat.diffuse;
+    exit_normal = exit_mat.diffuse;
+    
+    play_hover_tex = play_hover;
+    training_hover_tex = training_hover;
+    exit_hover_tex = exit_hover;
 
     background->addChild(logo);
     background->addChild(play_button);
@@ -209,30 +221,30 @@ void MenuStage::update(double seconds_elapsed) {
                           mouse_pos.y <= (exit_y + BUTTON_HEIGHT/2);
     
     if (mouse_over_play) {
-        play_button->material.color = Vector4::WHITE * 2.0f;
+        play_button->material.diffuse = play_hover_tex;
         if (Input::wasMousePressed(SDL_BUTTON_LEFT)) {
             Game::instance->goToStage(STAGE_PLAY);
         }
     } else {
-        play_button->material.color = Vector4::WHITE;
+        play_button->material.diffuse = play_normal;
     }
     
     if (mouse_over_training) {
-        training_button->material.color = Vector4::WHITE * 2.0f;
+        training_button->material.diffuse = training_hover_tex;
         if (Input::wasMousePressed(SDL_BUTTON_LEFT)) {
             Game::instance->goToStage(STAGE_PLAY);
         }
     } else {
-        training_button->material.color = Vector4::WHITE;
+        training_button->material.diffuse = training_normal;
     }
     
     if (mouse_over_exit) {
-        exit_button->material.color = Vector4::WHITE * 2.0f;
+        exit_button->material.diffuse = exit_hover_tex;
         if (Input::wasMousePressed(SDL_BUTTON_LEFT)) {
             Game::instance->must_exit = true;
         }
     } else {
-        exit_button->material.color = Vector4::WHITE;
+        exit_button->material.diffuse = exit_normal;
     }
     
     background->update(seconds_elapsed);
