@@ -50,9 +50,16 @@ SDL_Window* createWindow(const char* caption, int width, int height, bool fullsc
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 
 	//create the window
+	// Ensure minimum window size
+	width = std::max(width, 1280);
+	height = std::max(height, 720);
+
 	SDL_Window *window = SDL_CreateWindow(caption, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE|
-                                          (retina ? SDL_WINDOW_ALLOW_HIGHDPI:0) |
-                                          (fullscreen?SDL_WINDOW_FULLSCREEN_DESKTOP:0) );
+	                                       (retina ? SDL_WINDOW_ALLOW_HIGHDPI:0) |
+	                                       (fullscreen?SDL_WINDOW_FULLSCREEN_DESKTOP:0) );
+
+	// Set minimum window size
+	SDL_SetWindowMinimumSize(window, 800, 600);
 	if(!window)
 	{
 		fprintf(stderr, "Window creation error: %s\n", SDL_GetError());
@@ -183,13 +190,13 @@ int main(int argc, char **argv)
 	SDL_Init(SDL_INIT_EVERYTHING);
 
 	bool fullscreen = false; //change this to go fullscreen
-	Vector2 size(800,600);
+	Vector2 size(1280,720);
 
 	if(fullscreen)
 		size = getDesktopSize(0);
 
 	//create the game window (WINDOW_WIDTH and WINDOW_HEIGHT are two macros defined in includes.h)
-	SDL_Window* window = createWindow("TJE", (int)size.x, (int)size.y, fullscreen );
+	SDL_Window* window = createWindow("TJE Skier Game", (int)size.x, (int)size.y, fullscreen );
 	if (!window)
 		return 0;
 	int window_width, window_height;

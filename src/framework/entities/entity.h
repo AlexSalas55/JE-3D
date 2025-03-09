@@ -7,6 +7,8 @@ class Camera;
 class Mesh;
 class World;
 class EntityCollider;
+class Entity;
+
 
 enum eCollisionFilter {
 	NONE = 0,
@@ -23,6 +25,7 @@ struct sCollisionData {
 	float distance = 0.f;
 	bool collision = false;
 	EntityCollider* collider = nullptr;
+	Entity* colEntity = nullptr;
 };
 
 class Entity {
@@ -35,6 +38,7 @@ public:
 	std::string name;
 
 	Matrix44 model;
+
 	Entity* parent = nullptr;
 	std::vector<Entity*> children;
 

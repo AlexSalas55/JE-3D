@@ -49,7 +49,12 @@ void PlayStage::onKeyDown(SDL_KeyboardEvent event) {
             // Create player2 with the same mesh as player1 to ensure skeleton compatibility
             Mesh* player_mesh = world->player->mesh;
             world->player2 = new Player(player_mesh, player_material, "player2");
-            world->player2->model.setTranslation(5.0f, 200.0f, 0.0f);
+            //world->player2->model.setTranslation(5.0f, 200.0f, 0.0f);
+            //world->player2->model.setTranslation(372.0f, 700.0f, 235.0f); //mapa pepino
+
+            //set position to same as player 1 +10.0f at z
+            world->player2->model.setTranslation(world->player->model.m[12], world->player->model.m[13], world->player->model.m[14] + 10.0f);
+
             
             // Ensure animations are properly initialized before adding to scene
             world->player2->isAnimated = world->player->isAnimated;

@@ -40,7 +40,7 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	// Create and setup camera first
 	camera = new Camera();
 	camera->lookAt(Vector3(0.f, 2.f, -5.f), Vector3(0.f, 0.f, 0.f), Vector3(0.f, 1.f, 0.f));
-	camera->setPerspective(60.f, window_width/(float)window_height, 0.1f, 3000.f);
+	camera->setPerspective(65.f, window_width/(float)window_height, 0.1f, 3000.f);
 
 	// OpenGL flags
 	glEnable(GL_CULL_FACE);
@@ -98,19 +98,25 @@ void Game::doFrame(void)
 
 	if (multiplayer_enabled && camera2 && World::get_instance()->player2)
 	{
-		// Left viewport (Player 1)
-		glViewport(0, 0, window_width/2, window_height);
-		render();
+	    // Set aspect ratio for split screen (half width)
+	    float split_aspect = (window_width * 0.5f) / window_height;
+	    camera->aspect = split_aspect;
+	    camera2->aspect = split_aspect;
 
-		// Right viewport (Player 2)
-		glViewport(window_width/2, 0, window_width/2, window_height);
-		render();
+	    // Left viewport (Player 1)
+	    glViewport(0, 0, window_width/2, window_height);
+	    render();
+
+	    // Right viewport (Player 2)
+	    glViewport(window_width/2, 0, window_width/2, window_height);
+	    render();
 	}
 	else
 	{
-		// Full viewport for single player
-		glViewport(0, 0, window_width, window_height);
-		render();
+	    // Full viewport for single player
+	    camera->aspect = window_width / (float)window_height;
+	    glViewport(0, 0, window_width, window_height);
+	    render();
 	}
 
 	// Swap between front buffer and back buffer
@@ -218,14 +224,25 @@ void Game::onGamepadButtonUp(SDL_JoyButtonEvent event)
 
 void Game::onResize(int width, int height)
 {
-	std::cout << "window resized: " << width << "," << height << std::endl;
-	glViewport(0,0, width, height);
-	camera->aspect = width / (float)height;
-	window_width = width;
-	window_height = height;
+    // Enforce minimum size
+    width = std::max(width, 1280);
+    height = std::max(height, 720);
+    
+    std::cout << "window resized: " << width << "," << height << std::endl;
+    window_width = width;
+    window_height = height;
 
-	if (current_stage) {
-		current_stage->onResize(width, height);
-	}
+    // Update camera aspect ratios based on split-screen state
+    if (multiplayer_enabled && camera2) {
+        float split_aspect = (width * 0.5f) / (float)height;
+        camera->aspect = split_aspect;
+        if (camera2) camera2->aspect = split_aspect;
+    } else {
+        camera->aspect = width / (float)height;
+    }
+
+    if (current_stage) {
+        current_stage->onResize(width, height);
+    }
 }
 

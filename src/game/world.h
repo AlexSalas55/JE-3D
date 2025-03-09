@@ -31,6 +31,9 @@ public:
     Camera* camera2D;    // 2D camera for UI
     Vector3 eye;
     Vector3 center;
+
+    float camera_roll = 0.0f;
+    float camera2_roll = 0.0f;
     
     // Player 2 camera variables
     float camera2_yaw = 0.f;

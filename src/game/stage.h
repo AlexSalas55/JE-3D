@@ -45,16 +45,19 @@ private:
     EntityMesh* play_button;
     EntityMesh* training_button;
     EntityMesh* exit_button;
+    EntityMesh* multiplayer_button;
 
     // Texturas normales
     Texture* play_normal;
     Texture* training_normal;
     Texture* exit_normal;
+    Texture* multiplayer_normal;
 
     // Texturas hover
     Texture* play_hover_tex;
     Texture* training_hover_tex;
     Texture* exit_hover_tex;
+    Texture* multiplayer_hover_tex;
 };
 
 class PlayStage : public Stage {

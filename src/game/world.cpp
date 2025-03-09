@@ -32,7 +32,11 @@ World::World() {
 	player_material.diffuse = Texture::Get("data/meshes/playerColor.png");
     // player = new Player(Mesh::Get("data/meshes/soldier.obj"), player_material, "player");
     player = new Player(Mesh::Get("data/meshes/player.mesh"), player_material, "player");
-    player->model.setTranslation(00.0f, 200.0f, 0.0f); //mapa pepino
+    //player->model.setTranslation(00.0f, 200.0f, 0.0f); //mapa pepino
+    //player->model.setTranslation(372.0f, 700.0f, 230.0f); //two marios per separat
+    player->model.setTranslation(345.0f, 184.0f, 37.0f); //merged marios
+    
+
     root->addChild(player);
     
     // Create second player for multiplayer
@@ -44,7 +48,7 @@ World::World() {
         // Setup second camera
         Game::instance->camera2 = new Camera();
         Game::instance->camera2->lookAt(Vector3(0.f, 2.f, -5.f), Vector3(0.f, 0.f, 0.f), Vector3(0.f, 1.f, 0.f));
-        Game::instance->camera2->setPerspective(60.f, Game::instance->window_width/(float)Game::instance->window_height, 0.1f, 3000.f);
+        Game::instance->camera2->setPerspective(65.f, Game::instance->window_width/(float)Game::instance->window_height, 0.1f, 3000.f);
     }
     
     {
@@ -207,24 +211,28 @@ void World::update(double seconds_elapsed) {
                 camera2_yaw -= seconds_elapsed * rotation_speed;
             if (Input::isKeyPressed(SDL_SCANCODE_K))
                 camera2_yaw += seconds_elapsed * rotation_speed;
+            /*                
             if (Input::isKeyPressed(SDL_SCANCODE_I))
                 camera2_pitch += seconds_elapsed * rotation_speed;
             if (Input::isKeyPressed(SDL_SCANCODE_J))
                 camera2_pitch -= seconds_elapsed * rotation_speed;
-                
+                */
             // Update Player 2
             player2->update(seconds_elapsed);
         }
 
         // Player 1 camera controls with arrow keys
-        if (Input::isKeyPressed(SDL_SCANCODE_LEFT))
+        if (Input::isKeyPressed(SDL_SCANCODE_LEFT) || Input::isKeyPressed(SDL_SCANCODE_A))
             camera_yaw -= seconds_elapsed * rotation_speed;
-        if (Input::isKeyPressed(SDL_SCANCODE_RIGHT))
+        if (Input::isKeyPressed(SDL_SCANCODE_RIGHT) || Input::isKeyPressed(SDL_SCANCODE_D))
             camera_yaw += seconds_elapsed * rotation_speed;
+
+            /*
         if (Input::isKeyPressed(SDL_SCANCODE_DOWN))
             camera_pitch -= seconds_elapsed * rotation_speed;
         if (Input::isKeyPressed(SDL_SCANCODE_UP))
             camera_pitch += seconds_elapsed * rotation_speed;
+            */
 
         // Mantener el pitch dentro de límites
         camera_pitch = clamp(camera_pitch, -M_PI * 0.4f, M_PI * 0.4f);
@@ -249,10 +257,17 @@ void World::update(double seconds_elapsed) {
         }
 
         camera->lookAt(eye, center, Vector3(0, 1, 0));
+        /*
+        // Add roll for player 1
+        Matrix44 rollMatrix;
+        rollMatrix.setRotation(camera_roll * DEG2RAD, camera->center - camera->eye);
+        camera->up = rollMatrix.rotateVector(Vector3(0,1,0));
+        */
+
         // Handle camera for player 2 in multiplayer mode
         if (Game::instance->multiplayer_enabled && player2) {
             // Use the same camera pitch as player 1 for consistent behavior
-            camera2_pitch = camera_pitch;
+            //camera2_pitch = camera_pitch;
             
             Matrix44 mYaw2;
             mYaw2.setRotation(camera2_yaw, Vector3(0, 1, 0));
@@ -268,6 +283,12 @@ void World::update(double seconds_elapsed) {
             center2 = player2_pos + Vector3(0.f, 0.8f, 0.0f);
             
             Game::instance->camera2->lookAt(eye2, center2, Vector3(0, 1, 0));
+            /*
+            // Add roll for player 2
+            Matrix44 rollMatrix2;
+            rollMatrix2.setRotation(camera2_roll * DEG2RAD, Game::instance->camera2->center - Game::instance->camera2->eye);
+            Game::instance->camera2->up = rollMatrix2.rotateVector(Vector3(0,1,0));
+            */
         }
     }
 
