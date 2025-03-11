@@ -40,17 +40,22 @@ void PlayStage::restart() {
     show_end_screen = false;
     player1_is_winner = false;
 
-
     // Reset player positions
     Vector3 start_pos(345.0f, 184.0f, 37.0f);
     if (world->player) {
         world->player->model.setTranslation(start_pos.x, start_pos.y, start_pos.z);
         world->player->setRecoveryPosition(start_pos);
+        
+        // girar el jugador 1 180 grados
+        world->camera_yaw = M_PI;
     }
 
     if (world->player2) {
         world->player2->model.setTranslation(start_pos.x, start_pos.y, start_pos.z + 10.0f);
         world->player2->setRecoveryPosition(start_pos);
+        
+        // girar el jugador 2 180 grados
+        world->camera2_yaw = M_PI;
     }
 }
 
@@ -68,6 +73,14 @@ void PlayStage::onEnter(Stage* prev_stage) {
     // Inicializar el jugador 2 si el modo multijugador está activado
     Game* game = Game::instance;
     World* world = World::get_instance();
+    
+    // girar el jugador 1 180 grados
+    world->camera_yaw = M_PI; // 180 grados en radianes
+    
+    // girar el jugador 2 180 grados
+    if (game->multiplayer_enabled) {
+        world->camera2_yaw = M_PI;
+    }
     
     if (game->multiplayer_enabled && !world->player2) {
         // Create player 2 and its camera
