@@ -32,6 +32,7 @@ public:
     SnowParticle particles[MAX_SNOW_PARTICLES];
     void updateSnowParticles(float dt);
     void renderSnowParticles(Camera* camera);
+    float air_time = 0.0f;
 private:
     float walk_speed = 20.0f;
     Vector3 velocity = Vector3(0.0f);
@@ -59,7 +60,7 @@ private:
 
     float air_control_factor = 0.5f;
     float air_gravity_multiplier = 0.15f;
-    float air_time = 0.0f;
+
 
     float max_speed = 50.0f;          
     float acceleration = 5.0f;        

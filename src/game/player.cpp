@@ -544,7 +544,6 @@ void Player::update(float seconds_elapsed)
             float slope_factor = calculateSlopeFactor();
             float slope_angle_deg = slope_factor * RAD2DEG;
             
-            
             // Adjust camera angle based on player's facing direction in air
             float target_camera_angle;
             if (facing_factor < 0) { // Facing uphill in air
@@ -554,9 +553,8 @@ void Player::update(float seconds_elapsed)
                 target_camera_angle = slope_angle_deg * 4.0f;
                 target_camera_angle = clamp(target_camera_angle, 1.0f, 5.0f);
             }
-            
             updateCameraPitch(target_camera_angle);
-        }
+        } 
 
         //gravity in the correct direction
         Vector3 gravity_direction = Vector3::UP - ground_normal * (ground_normal.dot(Vector3::UP));

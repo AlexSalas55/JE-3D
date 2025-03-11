@@ -56,15 +56,15 @@ bool SceneParser::parse(const char* filename, Entity* root)
 		if (render_data.models.empty())
 			continue;
 
-		Material mat;
-		// Configurar el material básico
-		mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+		Material material;
+		material.shader = Shader::Get("data/shaders/phong.vs", "data/shaders/phong.fs");
+		material.color = Vector4(1, 1, 1, 1);
 		
 		// Intentar cargar la textura del colormap si existe
 		std::string texture_path = mesh_name.substr(0, mesh_name.find_last_of(".")) + "/colormap.png";
 		Texture* tex = Texture::Get(texture_path.c_str());
 		if (tex) {
-			mat.diffuse = tex;
+			material.diffuse = tex;
 		}
 		
 		EntityMesh* new_entity = nullptr;
@@ -77,7 +77,7 @@ bool SceneParser::parse(const char* filename, Entity* root)
 		//tag player pos player set translation
 		if (tag_player != std::string::npos) {
 			Mesh* mesh = Mesh::Get("...");
-			new_entity = new EntityMesh(mesh, mat);
+			new_entity = new EntityMesh(mesh, material);
 			new_entity->model.setTranslation(0.0f, 250.0f, 0.0f);
 			//player set translation
 			//player->setTranslation(render_data.models[0].getTranslation());
@@ -90,9 +90,9 @@ bool SceneParser::parse(const char* filename, Entity* root)
 		}
 		else {
 			Mesh* mesh = Mesh::Get(mesh_name.c_str());
-			//new_entity = new EntityMesh(mesh, mat);
+			//new_entity = new EntityMesh(mesh, material);
 			//new entity collider
-			new_entity = new EntityCollider(mesh, mat);
+			new_entity = new EntityCollider(mesh, material);
 
 		}
 

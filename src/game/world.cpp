@@ -27,10 +27,9 @@ World::World() {
 
     // Create and setup player
     Material player_material;
-    // player_material.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
-    player_material.shader = Shader::Get("data/shaders/skinning.vs", "data/shaders/texture.fs");
-	player_material.diffuse = Texture::Get("data/meshes/playerColor.png");
-    // player = new Player(Mesh::Get("data/meshes/soldier.obj"), player_material, "player");
+    player_material.shader = Shader::Get("data/shaders/skinning_phong.vs", "data/shaders/skinning_phong.fs");
+    player_material.diffuse = Texture::Get("data/meshes/playerColor.png");
+    player_material.color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);  // Set base color to white
     player = new Player(Mesh::Get("data/meshes/player.mesh"), player_material, "player");
     //player->model.setTranslation(00.0f, 200.0f, 0.0f); //mapa pepino
     //player->model.setTranslation(372.0f, 700.0f, 230.0f); //two marios per separat
@@ -104,6 +103,17 @@ World::World() {
     SceneParser parser;
     bool ok = parser.parse("data/myscene.scene", root);
     assert(ok);
+
+    // Initialize Phong shader and default material
+    phong_shader = Shader::Get("data/shaders/phong.vs", "data/shaders/phong.fs");
+    
+    // Set up default light - position it high above the starting point for better visibility
+    light_position = Vector3(345.0f, 500.0f, 37.0f);  // Above starting position
+    light_color = Vector3(0.95f, 0.92f, 0.9f);  // Slightly dimmer, warmer light for snow
+    
+    // Set up second light between portal fall and finish line
+    light2_position = Vector3(600.0f, 400.0f, 200.0f);  // Positioned between portal and finish
+    light2_color = Vector3(0.85f, 0.9f, 1.0f);  // Slightly cooler light for contrast
 }
 
 void World::render() {
@@ -138,7 +148,45 @@ void World::render() {
     // Draw the floor grid
     drawGrid();
     
-    // Render all scene tree
+    // Set light parameters for Phong shader before rendering scene
+    if (phong_shader) {
+        phong_shader->enable();
+        
+        // Update light position to follow player for better visibility
+        light_position = player->model.getTranslation() + Vector3(0, 300.0f, 0);
+        
+        phong_shader->setUniform3("u_light_position", light_position.x, light_position.y, light_position.z);
+        phong_shader->setUniform3("u_light_color", light_color.x, light_color.y, light_color.z);
+        phong_shader->setUniform3("u_light2_position", light2_position.x, light2_position.y, light2_position.z);
+        phong_shader->setUniform3("u_light2_color", light2_color.x, light2_color.y, light2_color.z);
+        phong_shader->setUniform3("u_camera_position", current_camera->eye.x, current_camera->eye.y, current_camera->eye.z);
+        
+        // Set default material parameters - adjusted for snow
+        phong_shader->setUniform1("u_ambient", 0.45f);
+        phong_shader->setUniform1("u_diffuse", 0.6f);
+        phong_shader->setUniform1("u_specular", 0.2f);
+        phong_shader->setUniform1("u_shininess", 32.0f);
+        
+        phong_shader->disable();
+    }
+    
+    // Set the same lighting parameters for the player's skinning_phong shader
+    Shader* player_shader = player->material.shader;
+    if (player_shader) {
+        player_shader->enable();
+        player_shader->setUniform3("u_light_position", light_position.x, light_position.y, light_position.z);
+        player_shader->setUniform3("u_light_color", light_color.x, light_color.y, light_color.z);
+        player_shader->setUniform3("u_light2_position", light2_position.x, light2_position.y, light2_position.z);
+        player_shader->setUniform3("u_light2_color", light2_color.x, light2_color.y, light2_color.z);
+        player_shader->setUniform3("u_camera_position", current_camera->eye.x, current_camera->eye.y, current_camera->eye.z);
+        player_shader->setUniform1("u_ambient", 0.45f);
+        player_shader->setUniform1("u_diffuse", 0.6f);
+        player_shader->setUniform1("u_specular", 0.2f);
+        player_shader->setUniform1("u_shininess", 32.0f);
+        player_shader->disable();
+    }
+    
+    // Render scene
     root->render(current_camera);
 }
 

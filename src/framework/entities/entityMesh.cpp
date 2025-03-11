@@ -17,13 +17,14 @@ EntityMesh::~EntityMesh() {
 
 void EntityMesh::render(Camera* camera)
 {
+	/*
 	if (!mesh) {
 		assert(0);
 		return;
 	}
 	if (!material.shader) {
 		material.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/flat.fs");
-	}
+	}*/
 
 	camera->enable();
 
@@ -34,17 +35,35 @@ void EntityMesh::render(Camera* camera)
 	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
 	shader->setUniform("u_color", material.color);
 
-	if (material.diffuse) {
-		shader->setUniform("u_texture", material.diffuse, 0);
-	}
+	if (!material.shader || !mesh) return;
 
+	// Enable shader and pass uniforms
+	material.shader->enable();
+
+	// Set standard uniforms
+	material.shader->setUniform("u_model", getGlobalMatrix());
+	material.shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+	
+	// Set material color
+	material.shader->setUniform("u_color", material.color);
+
+	// Set texture if available
+	if (material.diffuse) {
+		material.shader->setUniform("u_texture", material.diffuse, 0);
+	}
+	
 	if (isAnimated) {
 		mesh->renderAnimated(GL_TRIANGLES, &animator.getCurrentSkeleton());
 	} else {
 		mesh->render(GL_TRIANGLES);
 	}
 
-	shader->disable();
+
+	// Render the mesh
+	mesh->render(GL_TRIANGLES);
+
+	// Disable shader
+	material.shader->disable();
 
 	// Propaga la llamada a render a los hijos invocando el método de la clase base
 	Entity::render(camera);

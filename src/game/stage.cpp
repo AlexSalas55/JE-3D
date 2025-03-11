@@ -273,6 +273,12 @@ void PlayStage::update(double seconds_elapsed) {
             }
         }
     }
+
+    //if air_time > 3.0f, restart play stage
+    if (world->player->air_time > 3.0f) {
+        restart();
+        world->player->air_time = 0.0f;
+    }
     
     world->update(seconds_elapsed);
 }

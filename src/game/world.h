@@ -59,6 +59,13 @@ public:
     Vector3 camera_stored_center;
     Vector3 camera_stored_up;
 
+    // Phong lighting
+    Shader* phong_shader;
+    Vector3 light_position;
+    Vector3 light_color;
+    Vector3 light2_position;  // Second light position
+    Vector3 light2_color;     // Second light color
+
     void render();
     void update(double seconds_elapsed);
 
