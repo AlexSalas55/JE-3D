@@ -17,22 +17,167 @@ void PlayStage::init() {
 }
 
 void PlayStage::onEnter(Stage* prev_stage) {
+    // Reset chronometers and states when entering stage
+    chronometer1 = 0.0;
+    chronometer2 = 0.0;
+    timer1_active = false;
+    timer2_active = false;
+    player1_finished = false;
+    player2_finished = false;
+
     // Lock/unlock cursor depending on free camera
     bool must_lock = !World::get_instance()->free_camera;
     Game::instance->setMouseLocked(must_lock);
-    
+
     // Reproducir música del modo de juego con BASS_SAMPLE_LOOP para que se repita
-    play_music_channel = Audio::Play("data/assets/audio/music/music_play1.wav", 0.2f, BASS_SAMPLE_LOOP);
+    play_music_channel = Audio::Play("data/assets/audio/music/music_play1.wav", 0.085f, BASS_SAMPLE_LOOP);
 }
 
 void PlayStage::render() {
     World* world = World::get_instance();
     world->render();
+
+    Game* game = Game::instance;
+    int window_width = game->window_width;
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // Show active race timer (moved 100 pixels from edge)
+    renderChronometer(chronometer1, window_width - 300, 30);
+    
+    // Show checkpoint and final times
+    int y_offset = 60;
+    
+    if (player1_checkpoint) {
+        char p1_checkpoint[64];
+        sprintf(p1_checkpoint, "P1 Checkpoint: %02d:%02d.%03d", 
+            (int)(checkpoint1_time / 60.0),
+            (int)(checkpoint1_time) % 60,
+            (int)((checkpoint1_time - (int)checkpoint1_time) * 1000));
+        drawText(window_width - 300, y_offset, p1_checkpoint, Vector3(0.5,1,0.5), 2);
+        y_offset += 30;
+    }
+    
+    if (player1_finished) {
+        char p1_time[64];
+        sprintf(p1_time, "P1 Final: %02d:%02d.%03d", 
+            (int)(chronometer1 / 60.0),
+            (int)(chronometer1) % 60,
+            (int)((chronometer1 - (int)chronometer1) * 1000));
+        drawText(window_width - 300, y_offset, p1_time, Vector3(1,1,0), 2);
+        y_offset += 30;
+    }
+    
+    if (game->multiplayer_enabled) {
+        if (player2_checkpoint) {
+            char p2_checkpoint[64];
+            sprintf(p2_checkpoint, "P2 Checkpoint: %02d:%02d.%03d", 
+                (int)(checkpoint2_time / 60.0),
+                (int)(checkpoint2_time) % 60,
+                (int)((checkpoint2_time - (int)checkpoint2_time) * 1000));
+            drawText(window_width - 300, y_offset, p2_checkpoint, Vector3(0.5,0.5,1), 2);
+            y_offset += 30;
+        }
+        
+        if (player2_finished) {
+            char p2_time[64];
+            sprintf(p2_time, "P2 Final: %02d:%02d.%03d", 
+                (int)(chronometer2 / 60.0),
+                (int)(chronometer2) % 60,
+                (int)((chronometer2 - (int)chronometer2) * 1000));
+            drawText(window_width - 300, y_offset, p2_time, Vector3(0,1,1), 2);
+        }
+    }
+    
+    glDisable(GL_BLEND);
 }
 
 void PlayStage::update(double seconds_elapsed) {
     World* world = World::get_instance();
+    Game* game = Game::instance;
+    
+    // Checkpoint and finish line positions
+    Vector3 checkpoint_pos(367.0f, -762.0f, 228.0f);
+    Vector3 finish_line_pos(-330.057f, -1408.09f, -667.831f); // Center of finish line
+    float checkpoint_threshold = 15.0f;
+    float finish_threshold = 20.0f; // Slightly larger threshold for finish line
+    
+    // Player 1 logic
+    Vector3 player1_pos = world->player->model.getTranslation();
+    Vector3 start_pos(345.0f, 184.0f, 37.0f);
+    if (!player1_finished) {
+        // Start timer when player moves from start position
+        if (!timer1_active && (player1_pos - start_pos).length() > 0.1f) {
+            timer1_active = true;
+        }
+        
+        // Update timer if active
+        if (timer1_active) {
+            chronometer1 += seconds_elapsed;
+        }
+        
+        // Check for checkpoint
+        if (!player1_checkpoint && (player1_pos - checkpoint_pos).length() < checkpoint_threshold) {
+            checkpoint1_time = chronometer1;
+            player1_checkpoint = true;
+            world->player->setRecoveryPosition(checkpoint_pos); // Set recovery position to checkpoint
+        }
+        
+        // Check if player has finished
+        if ((player1_pos - finish_line_pos).length() < finish_threshold) {
+            timer1_active = false;
+            player1_finished = true;
+        }
+    }
+    
+    // Player 2 logic (if multiplayer is enabled)
+    if (game->multiplayer_enabled && world->player2) {
+        Vector3 player2_pos = world->player2->model.getTranslation();
+        if (!player2_finished) {
+            // Start timer when player moves from start position
+            if (!timer2_active && (player2_pos - start_pos).length() > 0.1f) {
+                timer2_active = true;
+            }
+            
+            // Update timer if active
+            if (timer2_active) {
+                chronometer2 += seconds_elapsed;
+            }
+            
+            // Check for checkpoint
+            if (!player2_checkpoint && (player2_pos - checkpoint_pos).length() < checkpoint_threshold) {
+                checkpoint2_time = chronometer2;
+                player2_checkpoint = true;
+                world->player2->setRecoveryPosition(checkpoint_pos); // Set recovery position to checkpoint
+            }
+            
+            // Check if player has finished
+            if ((player2_pos - finish_line_pos).length() < finish_threshold) {
+                timer2_active = false;
+                player2_finished = true;
+            }
+        }
+    }
+    
     world->update(seconds_elapsed);
+}
+
+void PlayStage::renderChronometer(double time, int x, int y) {
+    // Format time as minutes:seconds.milliseconds
+    int minutes = (int)(time / 60.0);
+    int seconds = (int)(time) % 60;
+    int milliseconds = (int)((time - (int)time) * 1000);
+    
+    char time_str[32];
+    sprintf(time_str, "%02d:%02d.%03d", minutes, seconds, milliseconds);
+    
+    // Draw white text with black outline for better visibility
+    drawText(x-1, y, time_str, Vector3(0,0,0), 2);
+    drawText(x+1, y, time_str, Vector3(0,0,0), 2);
+    drawText(x, y-1, time_str, Vector3(0,0,0), 2);
+    drawText(x, y+1, time_str, Vector3(0,0,0), 2);
+    drawText(x, y, time_str, Vector3(1,1,1), 2);
 }
 
 void PlayStage::onKeyDown(SDL_KeyboardEvent event) {

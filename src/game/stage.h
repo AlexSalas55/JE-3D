@@ -60,7 +60,7 @@ private:
     Texture* training_hover_tex;
     Texture* exit_hover_tex;
     Texture* multiplayer_hover_tex;
-    
+
     // Canal de audio para la música del menú
     HCHANNEL menu_music_channel;
 };
@@ -76,6 +76,17 @@ public:
     void onKeyDown(SDL_KeyboardEvent event) override;
 
 private:
-    // Canal de audio para la música del modo de juego
-    HCHANNEL play_music_channel;
+    HCHANNEL play_music_channel;    // Canal de audio para la música del modo de juego
+    double chronometer1 = 0.0;  // Timer for player 1
+    double chronometer2 = 0.0;  // Timer for player 2
+    double checkpoint1_time = 0.0;  // Checkpoint time for player 1
+    double checkpoint2_time = 0.0;  // Checkpoint time for player 2
+    bool timer1_active = false; // Track if player 1's timer is running
+    bool timer2_active = false; // Track if player 2's timer is running
+    bool player1_finished = false; // Track if player 1 has finished
+    bool player2_finished = false; // Track if player 2 has finished
+    bool player1_checkpoint = false; // Track if player 1 passed checkpoint
+    bool player2_checkpoint = false; // Track if player 2 passed checkpoint
+    
+    void renderChronometer(double time, int x, int y); // Helper to render time
 }; 

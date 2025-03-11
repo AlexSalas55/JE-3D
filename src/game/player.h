@@ -37,6 +37,11 @@ private:
     Vector3 velocity = Vector3(0.0f);
     EntityMesh* sword = nullptr;
 
+    // Collision recovery system
+    int collision_count = 0;
+    double last_collision_time = 0.0;
+    Vector3 recovery_position = Vector3(345.0f, 184.0f, 37.0f); // Start position by default
+    
     float slope_tolerance = 0.3f;
     float ground_friction = 0.1f; //smoother sliding
     float gravity = 1120.0f;
@@ -102,7 +107,6 @@ private:
     float calculateSlopeFactor() const;
     void handleUphillMovement(float seconds_elapsed, float slope_factor);
     void handleSlopeMovement(float seconds_elapsed, const Vector3& world_direction, const Vector3& slope_direction);
-    
 
     // Audio variables
     HCHANNEL move_sound_channel = 0;
@@ -111,6 +115,7 @@ private:
     bool is_move_sound_playing = false;
     bool is_brake_sound_playing = false;
     bool is_wind_sound_playing = false;
+    
 
 public:
     Player() {};
@@ -118,6 +123,7 @@ public:
 	void render(Camera* camera) override;
     void update(float seconds_elapsed) override;
 	void testCollisions(const Vector3& target_position, float seconds_elapsed);
+    void setRecoveryPosition(const Vector3& pos) { recovery_position = pos; }
 
 private:
     /*

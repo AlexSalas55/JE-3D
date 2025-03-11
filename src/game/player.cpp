@@ -3,10 +3,11 @@
 #include "graphics/texture.h"
 #include "graphics/shader.h"
 #include "framework/input.h"
-#include "framework/audio.h"
 #include "game/game.h"
 #include "game/world.h"
 #include "framework/entities/entity_collider.h"
+#include "framework/audio.h"
+
 
 Player::Player(Mesh* mesh, const Material& material, const std::string& name)
     : EntityMesh(mesh, material)
@@ -121,8 +122,6 @@ void Player::updateSnowParticles(float dt) {
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
 }
-
-
 
 
 void Player::renderSnowParticles(Camera* camera) {
@@ -339,7 +338,7 @@ void Player::update(float seconds_elapsed)
         Vector3 move_direction(0.0f);
         // Different movement controls for each player
         if (this == World::get_instance()->player2) {
-            if (Input::isKeyPressed(Input::isKeyPressed(SDL_SCANCODE_UP))) move_direction.z = 1.0f;
+            if (Input::isKeyPressed(SDL_SCANCODE_UP)) move_direction.z = 1.0f;
         } else {
             if (Input::isKeyPressed(SDL_SCANCODE_W)) move_direction.z = 1.0f;
         }
@@ -616,7 +615,7 @@ void Player::update(float seconds_elapsed)
         uphill_timer = 0.0f; // Reset timer when not facing uphill
     }
 
-    /////////////////////////////////// ANIMATION STATE SYSTEM + SOUNDS ///////////////////////////////////
+    /////////////////////////////////// ANIMATION STATE SYSTEM ///////////////////////////////////
     // TODO: collisions animations
     // if (animation_state != eAnimationState::JUMP) {
         // if key W was pressed, play the impulse animation
@@ -924,38 +923,51 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
         if (up_factor < 0.3f) { // True walls
             Vector3 wall_normal = collision.colNormal;
             Vector3 velocity_direction = velocity.normalize();
-            //current_speed *= 0.5f;
-
             
-            //if collision name is not CDas_Board_A__ef_dashboard
             if (collider->name != "scene/ice_jump_A__sn_jumpSnow01/ice_jump_A__sn_jumpSnow01.obj" 
                 && collider->name != "scene/CDas_Board_A__ef_dashboard/CDas_Board_A__ef_dashboard.obj"
                 && collider->name != "scene/CGli_Board__ef_glideboard/CGli_Board__ef_glideboard.obj"
                 && collider->name != "scene/polySurface8364587_1__sn_snowroad04s/polySurface8364587_1__sn_snowroad04s.obj"
                 && collider->name != "scene/polySurface8364601__sn_GoalLine/polySurface8364601__sn_GoalLine.obj"
                 && collider->name !=  "scene/polySurface8363355__sn_snowroad_Ktens/polySurface8363355__sn_snowroad_Ktens.obj") {
-                //current_speed *= 0.5f;
-                //current_speed = 0.0f;
-                //velocity = collision.colNormal * bounce_force;
-                //vertical_velocity = 0.0f;
+                
+                // Update collision tracking
+                double current_time = Game::instance->time;
+                if (current_time - last_collision_time > 2.0) {
+                    // Reset counter if more than 2 seconds have passed
+                    collision_count = 0;
+                }
+                collision_count++;
+                last_collision_time = current_time;
+
+                // Check if we need to recover position
+                if (collision_count >= 6 && current_time - last_collision_time <= 3.0) {
+                    // Reset collision tracking
+                    collision_count = 0;
+                    last_collision_time = 0.0;
+                    
+                    // Reset physics state
+                    velocity = Vector3(0.0f);
+                    current_speed = 0.0f;
+                    vertical_velocity = 0.0f;
+                    
+                    // Recover position
+                    model.setTranslation(recovery_position.x, recovery_position.y, recovery_position.z);
+                    return; // Skip rest of collision handling
+                }
 
                 float impact_speed = velocity.length();
                 impact_speed = std::max(impact_speed, 25.0f);
                 
-                // Get the incoming velocity direction
                 Vector3 incoming_dir = velocity.normalize();
                 Vector3 bounce_dir;
-                // Normal reflection for head-on collisions
                 bounce_dir = incoming_dir - collision.colNormal * (2.0f * incoming_dir.dot(collision.colNormal));
                 bounce_dir.normalize();
 
-                // Apply bounce
                 velocity = bounce_dir * impact_speed;
-                //current_speed = impact_speed * 0.1f;
                 current_speed = 0.0f;
                 vertical_velocity = 0.0f;
                 
-                // Move player back to collision point and push them away
                 Vector3 safe_position = collision.colPoint + (collision.colNormal * (5.0f + rand() % 10));
                 model.setTranslation(safe_position.x, safe_position.y, safe_position.z);
             }

@@ -253,9 +253,16 @@ void World::update(double seconds_elapsed) {
         else {
             float orbit_dist = 6.0f;  // Aumentado de 1.0f a 3.0f para alejar la cámara
             eye = player_pos - front * orbit_dist + Vector3(0.0f, 1.5f, 0.0f); // Aumentada la altura de 0.5f a 1.5f
-            center = player_pos + Vector3(0.f, 0.8f, 0.0f); // Ajustado el punto de mira
+            center = player_pos + Vector3(0.f, 0.8f, 0.0f); // Ajustado el punto de mira     
+            {
+                sCollisionData data = raycast(center, (eye - center).normalize());
+                if (data.collider) {
+                    eye = data.colPoint;
+                }
+            }
         }
 
+            
         camera->lookAt(eye, center, Vector3(0, 1, 0));
         /*
         // Add roll for player 1
