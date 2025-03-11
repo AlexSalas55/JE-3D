@@ -55,7 +55,6 @@ void PlayStage::restart() {
 }
 
 void PlayStage::onEnter(Stage* prev_stage) {
-
     restart();
 
     // Reset chronometers and states when entering stage
@@ -65,6 +64,49 @@ void PlayStage::onEnter(Stage* prev_stage) {
     timer2_active = false;
     player1_finished = false;
     player2_finished = false;
+
+    // Inicializar el jugador 2 si el modo multijugador está activado
+    Game* game = Game::instance;
+    World* world = World::get_instance();
+    
+    if (game->multiplayer_enabled && !world->player2) {
+        // Create player 2 and its camera
+        Material player_material;
+        player_material.shader = Shader::Get("data/shaders/skinning.vs", "data/shaders/texture.fs");
+        player_material.diffuse = Texture::Get("data/meshes/playerColor.png");
+        
+        // Create player2 with the same mesh as player1 to ensure skeleton compatibility
+        Mesh* player_mesh = world->player->mesh;
+        world->player2 = new Player(player_mesh, player_material, "player2");
+        
+        // Set position to same as player 1 +10.0f at z
+        Vector3 start_pos(345.0f, 184.0f, 37.0f);
+        world->player2->model.setTranslation(start_pos.x, start_pos.y, start_pos.z + 10.0f);
+        world->player2->setRecoveryPosition(start_pos);
+        
+        // Ensure animations are properly initialized before adding to scene
+        world->player2->isAnimated = world->player->isAnimated;
+        
+        // Initialize animation with the same state as player1
+        Animation* currentAnim = world->player->animator.getCurrentAnimation();
+        if (currentAnim) {
+            world->player2->animator.playAnimation(currentAnim->name.c_str(), true);
+        } else {
+            world->player2->animator.playAnimation("data/meshes/animations/idle.skanim", true);
+        }
+        
+        // Add to scene after full initialization
+        world->root->addChild(world->player2);
+        
+        game->camera2 = new Camera();
+        game->camera2->lookAt(Vector3(0.f, 2.f, -5.f), Vector3(0.f, 0.f, 0.f), Vector3(0.f, 1.f, 0.f));
+        game->camera2->setPerspective(60.f, game->window_width/(float)game->window_height, 0.1f, 3000.f);
+
+        // Create skybox2 for player 2
+        if (!world->skybox2) {
+            world->skybox2 = new EntityMesh(Mesh::Get("data/meshes/cubemap.ASE"), world->skybox->material);
+        }
+    }
 
     // Lock/unlock cursor depending on free camera
     bool must_lock = !World::get_instance()->free_camera;
@@ -439,7 +481,7 @@ void MenuStage::init() {
     logo->mesh->createQuad(width * 0.5f, height * 0.3f, logo_size, logo_size, true);
     logo->material = logo_mat;
 
-    // Play button
+    // Play button (a la izquierda)
     Material play_mat;
     play_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
     play_mat.diffuse = Texture::Get("data/textures/ui/play_button.png");
@@ -448,8 +490,20 @@ void MenuStage::init() {
     
     play_button = new EntityMesh();
     play_button->mesh = new Mesh();
-    play_button->mesh->createQuad(width * 0.5f, height * 0.55f, BUTTON_WIDTH, BUTTON_HEIGHT, true);
+    play_button->mesh->createQuad(width * 0.5f - BUTTON_WIDTH * 0.6f, height * 0.55f, BUTTON_WIDTH, BUTTON_HEIGHT, true);
     play_button->material = play_mat;
+
+    // Multiplayer button (a la derecha)
+    Material multiplayer_mat;
+    multiplayer_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+    multiplayer_mat.diffuse = Texture::Get("data/textures/ui/play_multi_button.png");
+    Texture* multiplayer_hover = Texture::Get("data/textures/ui/play_multi_button_hover.png");
+    multiplayer_mat.color = Vector4(1,1,1,1);
+    
+    multiplayer_button = new EntityMesh();
+    multiplayer_button->mesh = new Mesh();
+    multiplayer_button->mesh->createQuad(width * 0.5f + BUTTON_WIDTH * 0.6f, height * 0.55f, BUTTON_WIDTH, BUTTON_HEIGHT, true);
+    multiplayer_button->material = multiplayer_mat;
 
     // Training button
     Material training_mat;
@@ -477,15 +531,18 @@ void MenuStage::init() {
 
     // Guardar las texturas normales y hover
     play_normal = play_mat.diffuse;
+    multiplayer_normal = multiplayer_mat.diffuse;
     training_normal = training_mat.diffuse;
     exit_normal = exit_mat.diffuse;
     
     play_hover_tex = play_hover;
+    multiplayer_hover_tex = multiplayer_hover;
     training_hover_tex = training_hover;
     exit_hover_tex = exit_hover;
 
     background->addChild(logo);
     background->addChild(play_button);
+    background->addChild(multiplayer_button);
     background->addChild(training_button);
     background->addChild(exit_button);
 }
@@ -513,11 +570,20 @@ void MenuStage::update(double seconds_elapsed) {
     const float BUTTON_HEIGHT = BUTTON_WIDTH / (16.0f/9.0f);
     float center_x = width * 0.5f;
     
+    // Posiciones actualizadas para los botones en paralelo
+    float play_x = center_x - BUTTON_WIDTH * 0.6f;
     float play_y = height * 0.55f;
-    bool mouse_over_play = mouse_pos.x >= (center_x - BUTTON_WIDTH/2) && 
-                          mouse_pos.x <= (center_x + BUTTON_WIDTH/2) &&
+    bool mouse_over_play = mouse_pos.x >= (play_x - BUTTON_WIDTH/2) && 
+                          mouse_pos.x <= (play_x + BUTTON_WIDTH/2) &&
                           mouse_pos.y >= (play_y - BUTTON_HEIGHT/2) && 
                           mouse_pos.y <= (play_y + BUTTON_HEIGHT/2);
+    
+    float multiplayer_x = center_x + BUTTON_WIDTH * 0.6f;
+    float multiplayer_y = height * 0.55f;
+    bool mouse_over_multiplayer = mouse_pos.x >= (multiplayer_x - BUTTON_WIDTH/2) && 
+                                 mouse_pos.x <= (multiplayer_x + BUTTON_WIDTH/2) &&
+                                 mouse_pos.y >= (multiplayer_y - BUTTON_HEIGHT/2) && 
+                                 mouse_pos.y <= (multiplayer_y + BUTTON_HEIGHT/2);
     
     float training_y = height * 0.7f;
     bool mouse_over_training = mouse_pos.x >= (center_x - BUTTON_WIDTH/2) && 
@@ -534,10 +600,21 @@ void MenuStage::update(double seconds_elapsed) {
     if (mouse_over_play) {
         play_button->material.diffuse = play_hover_tex;
         if (Input::wasMousePressed(SDL_BUTTON_LEFT)) {
+            Game::instance->multiplayer_enabled = false; // Asegurarse de que el modo multijugador está desactivado
             Game::instance->goToStage(STAGE_PLAY);
         }
     } else {
         play_button->material.diffuse = play_normal;
+    }
+    
+    if (mouse_over_multiplayer) {
+        multiplayer_button->material.diffuse = multiplayer_hover_tex;
+        if (Input::wasMousePressed(SDL_BUTTON_LEFT)) {
+            Game::instance->multiplayer_enabled = true; // Activar el modo multijugador
+            Game::instance->goToStage(STAGE_PLAY);
+        }
+    } else {
+        multiplayer_button->material.diffuse = multiplayer_normal;
     }
     
     if (mouse_over_training) {
