@@ -65,6 +65,9 @@ public:
     Vector3 light_color;
     Vector3 light2_position;  // Second light position
     Vector3 light2_color;     // Second light color
+    
+    // Variable para indicar si estamos en el escenario de entrenamiento
+    bool is_training_stage = true;  // Por defecto, asumimos que estamos en entrenamiento
 
     void render();
     void update(double seconds_elapsed);
@@ -77,4 +80,11 @@ public:
 	// Collision detection
 	sCollisionData raycast(const Vector3& origin, const Vector3& direction, int layer = eCollisionFilter::ALL, bool closest = true, float max_ray_dist = 100000);
     void test_scene_collisions(const Vector3& target_position, std::vector<sCollisionData>& collisions, std::vector<sCollisionData>& ground_collisions, eCollisionFilter filter);
+    
+    // Camera collision handling
+    Vector3 adjustCameraPosition(const Vector3& target_eye, const Vector3& target_center, float min_distance = 0.5f);
+    bool isPointInsideMesh(const Vector3& point, float radius = 0.1f);
+    
+    // Método para cambiar entre escenario de entrenamiento y juego
+    void setTrainingStage(bool is_training) { is_training_stage = is_training; }
 };

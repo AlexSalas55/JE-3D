@@ -299,31 +299,30 @@ void World::update(double seconds_elapsed) {
             center = eye + front;
         }
         else {
-            float orbit_dist = 6.0f;  // Aumentado de 1.0f a 3.0f para alejar la cámara
-            eye = player_pos - front * orbit_dist + Vector3(0.0f, 1.5f, 0.0f); // Aumentada la altura de 0.5f a 1.5f
-            center = player_pos + Vector3(0.f, 0.8f, 0.0f); // Ajustado el punto de mira     
-            {
-                sCollisionData data = raycast(center, (eye - center).normalize());
-                if (data.collider) {
-                    eye = data.colPoint;
-                }
+            // Configuración de la cámara en tercera persona
+            float orbit_dist = 6.0f;  // Distancia de la cámara al jugador
+            
+            // Calcular la posición deseada de la cámara
+            center = player_pos + Vector3(0.f, 0.8f, 0.0f); // Punto de mira ajustado
+            Vector3 target_eye = player_pos - front * orbit_dist + Vector3(0.0f, 1.5f, 0.0f); // Posición deseada de la cámara
+            
+            // Aplicar detección de colisiones para ajustar la posición de la cámara
+            eye = adjustCameraPosition(target_eye, center, 0.5f);
+            
+            // Asegurarse de que la cámara no esté demasiado cerca del jugador
+            float min_distance = 2.0f;
+            float current_distance = (eye - center).length();
+            if (current_distance < min_distance) {
+                Vector3 dir = (eye - center).normalize();
+                eye = center + dir * min_distance;
             }
         }
 
-            
+        // Actualizar la cámara con las nuevas posiciones
         camera->lookAt(eye, center, Vector3(0, 1, 0));
-        /*
-        // Add roll for player 1
-        Matrix44 rollMatrix;
-        rollMatrix.setRotation(camera_roll * DEG2RAD, camera->center - camera->eye);
-        camera->up = rollMatrix.rotateVector(Vector3(0,1,0));
-        */
 
         // Handle camera for player 2 in multiplayer mode
         if (Game::instance->multiplayer_enabled && player2) {
-            // Use the same camera pitch as player 1 for consistent behavior
-            //camera2_pitch = camera_pitch;
-            
             Matrix44 mYaw2;
             mYaw2.setRotation(camera2_yaw, Vector3(0, 1, 0));
             Matrix44 mPitch2;
@@ -332,18 +331,24 @@ void World::update(double seconds_elapsed) {
             Vector3 front2 = (mPitch2 * mYaw2).frontVector().normalize();
             Vector3 player2_pos = player2->model.getTranslation();
             
-            // Third-person camera for player 2
+            // Configuración de la cámara en tercera persona para el jugador 2
             float orbit_dist2 = 6.0f;
-            eye2 = player2_pos - front2 * orbit_dist2 + Vector3(0.0f, 1.5f, 0.0f);
             center2 = player2_pos + Vector3(0.f, 0.8f, 0.0f);
+            Vector3 target_eye2 = player2_pos - front2 * orbit_dist2 + Vector3(0.0f, 1.5f, 0.0f);
             
+            // Aplicar detección de colisiones para ajustar la posición de la cámara del jugador 2
+            eye2 = adjustCameraPosition(target_eye2, center2, 0.5f);
+            
+            // Asegurarse de que la cámara no esté demasiado cerca del jugador 2
+            float min_distance2 = 2.0f;
+            float current_distance2 = (eye2 - center2).length();
+            if (current_distance2 < min_distance2) {
+                Vector3 dir2 = (eye2 - center2).normalize();
+                eye2 = center2 + dir2 * min_distance2;
+            }
+            
+            // Actualizar la cámara del jugador 2
             Game::instance->camera2->lookAt(eye2, center2, Vector3(0, 1, 0));
-            /*
-            // Add roll for player 2
-            Matrix44 rollMatrix2;
-            rollMatrix2.setRotation(camera2_roll * DEG2RAD, Game::instance->camera2->center - Game::instance->camera2->eye);
-            Game::instance->camera2->up = rollMatrix2.rotateVector(Vector3(0,1,0));
-            */
         }
     }
 
@@ -375,10 +380,15 @@ void World::destroyEntity(Entity* entity) {
 
 //raycast
 sCollisionData World::raycast(const Vector3& origin, const Vector3& direction, int layer, bool closest, float max_ray_dist) {
-	sCollisionData collision;
-	//collision.distance = max_ray_dist;
+    sCollisionData collision;
+    collision.distance = max_ray_dist; // Inicializar con la distancia máxima
 
+    // Iterar sobre todos los hijos del nodo raíz
     for (auto e : root->children) {
+        // Ignorar al jugador para evitar colisiones con él mismo
+        if (e == player || e == player2) {
+            continue;
+        }
 
         EntityCollider* ec = dynamic_cast<EntityCollider*>(e);
         if (ec == nullptr || !(ec->getLayer() & layer)) {
@@ -393,18 +403,22 @@ sCollisionData World::raycast(const Vector3& origin, const Vector3& direction, i
             continue;
         }
 
-        // There was a collision! Update if nearest..
+        // Hubo una colisión! Actualizar si es la más cercana
         float new_distance = (col_point - origin).length();
         if (new_distance < collision.distance) {
             collision = { col_point, col_normal, new_distance, true, ec };
+            
+            // Debug: imprimir información sobre la colisión
+            std::cout << "Raycast hit: " << ec->name << " at distance " << new_distance << std::endl;
         }
 
         if (!closest) {
             return collision;
         }
-
     }
-	return collision;
+    
+    // Si no se encontró ninguna colisión, devolver la estructura con collider = nullptr
+    return collision;
 }
 
 void World::test_scene_collisions(const Vector3& target_position, std::vector<sCollisionData>& collisions, std::vector<sCollisionData>& ground_collisions, eCollisionFilter filter)
@@ -417,4 +431,93 @@ void World::test_scene_collisions(const Vector3& target_position, std::vector<sC
         }
         ec->getCollisions(target_position, collisions, ground_collisions, filter);
 	}
+}
+
+Vector3 World::adjustCameraPosition(const Vector3& target_eye, const Vector3& target_center, float min_distance) {
+    // Si no estamos en el escenario de entrenamiento, devolver la posición original sin ajustes
+    if (!is_training_stage) {
+        return target_eye;
+    }
+    
+    // Dirección desde el centro (jugador) hacia la cámara
+    Vector3 dir = (target_eye - target_center).normalize();
+    
+    // Distancia deseada
+    float desired_distance = (target_eye - target_center).length();
+    
+    // Añadir un pequeño offset al origen para evitar colisiones con el propio jugador
+    Vector3 adjusted_origin = target_center + Vector3(0, 0.5f, 0);
+    
+    // Verificar si la posición deseada de la cámara está dentro de alguna malla
+    if (isPointInsideMesh(target_eye)) {
+        std::cout << "Camera target position is inside a mesh!" << std::endl;
+        
+        // Realizar un raycast desde el centro hacia la posición deseada de la cámara
+        sCollisionData collision = raycast(adjusted_origin, dir, eCollisionFilter::ALL, true, desired_distance);
+        
+        if (collision.collider) {
+            std::cout << "Camera collision detected! Distance: " << collision.distance << std::endl;
+            
+            // Calcular la nueva distancia, dejando un pequeño margen para no estar exactamente en la superficie
+            float new_distance = collision.distance * 0.85f; // Reducir un 15% para alejarse de la colisión (más suave)
+            
+            // Asegurarse de que la distancia no sea demasiado pequeña
+            new_distance = std::max(new_distance, 2.0f);
+            
+            // Calcular la nueva posición de la cámara con una elevación adicional
+            // Añadimos un componente vertical para elevar la cámara y obtener una vista más aérea
+            Vector3 up_offset = Vector3(0, 1.0f, 0) * (desired_distance - new_distance) * 0.5f;
+            Vector3 adjusted_eye = adjusted_origin + dir * new_distance + up_offset;
+            
+            // Verificar que la nueva posición no esté dentro de ninguna malla
+            if (isPointInsideMesh(adjusted_eye)) {
+                // Si aún está dentro, intentar acercar la cámara al jugador con diferentes ángulos
+                std::cout << "Camera still inside mesh after adjustment!" << std::endl;
+                
+                // Intentar diferentes distancias y elevaciones hasta encontrar una posición válida
+                for (float factor = 0.7f; factor >= 0.1f; factor -= 0.1f) {
+                    new_distance = desired_distance * factor;
+                    // Aumentar la elevación a medida que nos acercamos al jugador
+                    float elevation_factor = (1.0f - factor) * 2.0f;
+                    Vector3 higher_offset = Vector3(0, 1.5f, 0) * elevation_factor;
+                    adjusted_eye = adjusted_origin + dir * new_distance + higher_offset;
+                    
+                    if (!isPointInsideMesh(adjusted_eye)) {
+                        std::cout << "Found valid camera position at factor: " << factor << std::endl;
+                        return adjusted_eye;
+                    }
+                }
+                
+                // Si no se encuentra una posición válida, usar una posición muy cercana al jugador con vista aérea
+                return adjusted_origin + dir * 1.5f + Vector3(0, 2.0f, 0);
+            }
+            
+            return adjusted_eye;
+        }
+    }
+    
+    // Si no hay colisión o el punto no está dentro de ninguna malla, devolver la posición original
+    // con una ligera tendencia a elevarse para mantener consistencia
+    Vector3 slight_elevation = Vector3(0, 0.2f, 0);
+    return target_eye + slight_elevation;
+}
+
+bool World::isPointInsideMesh(const Vector3& point, float radius) {
+    // Comprobar si el punto está dentro de alguna malla usando test_scene_collisions
+    std::vector<sCollisionData> collisions;
+    std::vector<sCollisionData> ground_collisions;
+    
+    // Crear una esfera alrededor del punto para detectar colisiones
+    Vector3 sphere_center = point;
+    
+    // Comprobar colisiones con la esfera
+    test_scene_collisions(sphere_center, collisions, ground_collisions, eCollisionFilter::ALL);
+    
+    // Si hay colisiones, el punto está dentro de alguna malla
+    if (!collisions.empty()) {
+        std::cout << "Point is inside mesh! Collisions: " << collisions.size() << std::endl;
+        return true;
+    }
+    
+    return false;
 }

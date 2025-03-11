@@ -65,20 +65,20 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	goToStage(STAGE_MENU);
 
 	// Load one texture using the Texture Manager
-	texture = Texture::Get("data/textures/texture.tga");
+	// texture = Texture::Get("data/textures/texture.tga");
 
-	// Example of loading Mesh from Mesh Manager
-	mesh = Mesh::Get("data/meshes/box.ASE");
+	// // Example of loading Mesh from Mesh Manager
+	// mesh = Mesh::Get("data/meshes/box.ASE");
 
-	// Example of shader loading using the shaders manager
-	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+	// // Example of shader loading using the shaders manager
+	// shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
 
-	Material material;
-	material.diffuse = texture;
-	material.shader = shader;
-	material.color = Vector4::RED;
+	// Material material;
+	// material.diffuse = texture;
+	// material.shader = shader;
+	// material.color = Vector4::RED;
 
-	entity_mesh = new EntityMesh(mesh, material);
+	// entity_mesh = new EntityMesh(mesh, material);
 	
 	// Hide the cursor
 	SDL_ShowCursor(!mouse_locked); //hide or show the mouse

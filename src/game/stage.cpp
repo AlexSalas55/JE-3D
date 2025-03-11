@@ -74,6 +74,9 @@ void PlayStage::onEnter(Stage* prev_stage) {
     Game* game = Game::instance;
     World* world = World::get_instance();
     
+    // Establecer que NO estamos en el escenario de entrenamiento
+    world->setTrainingStage(false);
+    
     // girar el jugador 1 180 grados
     world->camera_yaw = M_PI; // 180 grados en radianes
     
@@ -715,14 +718,28 @@ void TrainingStage::restart() {
 }
 
 void TrainingStage::onEnter(Stage* prev_stage) {
-    restart();
+    Game* game = Game::instance;
+    World* world = World::get_instance();
     
-    // Lock/unlock cursor depending on free camera
-    bool must_lock = !World::get_instance()->free_camera;
-    Game::instance->setMouseLocked(must_lock);
+    // Establecer que estamos en el escenario de entrenamiento
+    world->setTrainingStage(true);
+    
+    // Mostrar el tutorial al entrar
+    show_tutorial = true;
+    
+    // Desbloquear el ratón para poder interactuar con la interfaz
+    game->setMouseLocked(false);
+    
+    // Posicionar al jugador en el punto de inicio del entrenamiento
+    Vector3 start_pos(1151.01f, -189.161f, 525.752f);
+    if (world->player) {
+        world->player->model.setTranslation(start_pos.x, start_pos.y, start_pos.z);
+        world->player->setRecoveryPosition(start_pos);
+        world->player->resetVelocity(); // Resetear la velocidad a cero
+    }
     
     // Reproducir música del modo de entrenamiento
-    training_music_channel = Audio::Play("data/assets/audio/music/music_play1.wav", 0.085f, BASS_SAMPLE_LOOP);
+    training_music_channel = Audio::Play("data/assets/audio/music/music_training.wav", 0.4f, BASS_SAMPLE_LOOP);
 }
 
 void TrainingStage::render() {
