@@ -50,6 +50,7 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	// Stages
 	stages[STAGE_MENU] = new MenuStage();
 	stages[STAGE_PLAY] = new PlayStage();
+	stages[STAGE_TRAINING] = new TrainingStage();
 	
 	for (auto entry : stages) {
 		Stage* stage = entry.second;

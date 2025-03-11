@@ -537,7 +537,7 @@ void MenuStage::update(double seconds_elapsed) {
     if (mouse_over_training) {
         training_button->material.diffuse = training_hover_tex;
         if (Input::wasMousePressed(SDL_BUTTON_LEFT)) {
-            Game::instance->goToStage(STAGE_PLAY);
+            Game::instance->goToStage(STAGE_TRAINING);
         }
     } else {
         training_button->material.diffuse = training_normal;
@@ -575,5 +575,127 @@ void PlayStage::onLeave(Stage* next_stage) {
     if (play_music_channel) {
         Audio::Stop(play_music_channel);
         play_music_channel = 0;
+    }
+}
+
+// Implementación de TrainingStage
+
+void TrainingStage::init() {
+    // Asegurarse de que World está inicializado
+    if (!World::get_instance()->root) {
+        World::get_instance(); // Esto creará una nueva instancia de World si no existe
+    }
+    
+    Game* game = Game::instance;
+    int width = game->window_width;
+    int height = game->window_height;
+    
+    // Crear la imagen del tutorial
+    Material tutorial_mat;
+    tutorial_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+    tutorial_mat.diffuse = Texture::Get("data/textures/ui/tutorial.png");
+    tutorial_mat.color = Vector4(1,1,1,1);
+    
+    tutorial_background = new EntityMesh();
+    tutorial_background->mesh = new Mesh();
+    tutorial_background->mesh->createQuad(width * 0.5f, height * 0.5f, width * 0.8f, height * 0.8f, true);
+    tutorial_background->material = tutorial_mat;
+}
+
+void TrainingStage::restart() {
+    World* world = World::get_instance();
+    
+    // Posición inicial para el entrenamiento
+    Vector3 start_pos(1151.01f, -189.161f, 525.752f);
+    
+    if (world->player) {
+        world->player->model.setTranslation(start_pos.x, start_pos.y, start_pos.z);
+        world->player->setRecoveryPosition(start_pos);
+        world->player->resetVelocity(); // Resetear la velocidad a cero
+    }
+    
+    // Mostrar tutorial al reiniciar
+    show_tutorial = true;
+}
+
+void TrainingStage::onEnter(Stage* prev_stage) {
+    restart();
+    
+    // Lock/unlock cursor depending on free camera
+    bool must_lock = !World::get_instance()->free_camera;
+    Game::instance->setMouseLocked(must_lock);
+    
+    // Reproducir música del modo de entrenamiento
+    training_music_channel = Audio::Play("data/assets/audio/music/music_play1.wav", 0.085f, BASS_SAMPLE_LOOP);
+}
+
+void TrainingStage::render() {
+    // Primero renderizamos el mundo
+    World* world = World::get_instance();
+    world->render();
+    
+    // Configuración para renderizado 2D
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // Mostrar imagen del tutorial si está activa
+    if (show_tutorial && tutorial_background) {
+        Camera* camera2D = world->camera2D;
+        tutorial_background->render(camera2D);
+        
+        // Mostrar mensaje para indicar cómo cerrar el tutorial
+        Game* game = Game::instance;
+        drawText(game->window_width * 0.5f - 150, game->window_height * 0.9f, "Press SPACE to continue", Vector3(1,1,1), 2);
+    } else {
+        // Solo mostrar HUD si no estamos en el tutorial
+        // Mostrar instrucciones en pantalla
+        drawText(20, 30, "Training Mode", Vector3(1,1,0), 2);
+        drawText(20, 60, "R - Return to starting position", Vector3(1,1,1), 2);
+        drawText(20, 90, "ENTER - Return to main menu", Vector3(1,1,1), 2);
+        drawText(20, 120, "SPACE - Show tutorial", Vector3(1,1,1), 2);
+    }
+    
+    // Restaurar configuración
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+}
+
+void TrainingStage::update(double seconds_elapsed) {
+    World* world = World::get_instance();
+    world->update(seconds_elapsed);
+}
+
+void TrainingStage::onKeyDown(SDL_KeyboardEvent event) {
+    World* world = World::get_instance();
+    
+    // Alternar tutorial al presionar SPACE
+    if (Input::wasKeyPressed(SDL_SCANCODE_SPACE)) {
+        show_tutorial = !show_tutorial;
+    }
+    
+    // Volver a la posición inicial al presionar R
+    if (Input::wasKeyPressed(SDL_SCANCODE_R)) {
+        Vector3 start_pos(1151.01f, -189.161f, 525.752f);
+        if (world->player) {
+            world->player->model.setTranslation(start_pos.x, start_pos.y, start_pos.z);
+            world->player->setRecoveryPosition(start_pos);
+            world->player->resetVelocity(); // Resetear la velocidad a cero
+        }
+    }
+    
+    // Volver al menú principal al presionar ENTER
+    if (Input::wasKeyPressed(SDL_SCANCODE_RETURN)) {
+        Game::instance->goToStage(STAGE_MENU);
+    }
+}
+
+void TrainingStage::onLeave(Stage* next_stage) {
+    // Detener la música del modo de entrenamiento cuando salimos de esta etapa
+    if (training_music_channel) {
+        Audio::Stop(training_music_channel);
+        training_music_channel = 0;
     }
 }

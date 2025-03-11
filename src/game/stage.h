@@ -9,7 +9,8 @@ class Camera;
 
 enum : uint8_t {
     STAGE_MENU,
-    STAGE_PLAY
+    STAGE_PLAY,
+    STAGE_TRAINING
 };
 
 class Stage {
@@ -98,4 +99,23 @@ private:
 
     void renderEndScreen();
     void renderChronometer(double time, int x, int y); // Helper to render time
+};
+
+class TrainingStage : public Stage {
+public:
+    TrainingStage() {};
+    void init() override;
+    void render() override;
+    void update(double seconds_elapsed) override;
+    void onEnter(Stage* prev_stage) override;
+    void onLeave(Stage* next_stage) override;
+    void onKeyDown(SDL_KeyboardEvent event) override;
+    void restart();
+
+private:
+    HCHANNEL training_music_channel = 0;    // Canal de audio para la música del modo de entrenamiento
+    bool show_tutorial = true; // Flag to show/hide tutorial image
+    
+    // Tutorial UI elements
+    EntityMesh* tutorial_background = nullptr;
 }; 

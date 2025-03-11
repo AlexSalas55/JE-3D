@@ -124,6 +124,7 @@ public:
     void update(float seconds_elapsed) override;
 	void testCollisions(const Vector3& target_position, float seconds_elapsed);
     void setRecoveryPosition(const Vector3& pos) { recovery_position = pos; }
+    void resetVelocity() { velocity = Vector3(0.0f); }
 
 private:
     /*
