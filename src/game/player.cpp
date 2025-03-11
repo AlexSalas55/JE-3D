@@ -23,136 +23,82 @@ Player::Player(Mesh* mesh, const Material& material, const std::string& name)
     if (idle) {
         animator.playAnimation("data/meshes/animations/idle.skanim", true);
     }
+
+    // Initialize falling snow particles
+    for (int i = 0; i < MAX_FALLING_SNOW; i++) {
+        spawnFallingSnowParticle(i);
+    }
 }
 
-void Player::updateSnowParticles(float dt) {
-    // Get current position once for all updates
-    Vector3 pos = model.getTranslation();
-
-    // Update existing particles
-    for (int i = 0; i < MAX_SNOW_PARTICLES; i++) {
-        SnowParticle& p = particles[i];
-        if (p.lifetime > 0) {
-            // Update particle without affecting player movement
-            p.lifetime -= dt;
-
-            Vector3 displacement = p.position - p.initial_pos;
-            float dist_factor = clamp(displacement.length() / 2.0f, 0.0f, 1.0f);
-
-            // Spread effect
-            Vector3 outward_dir = displacement.length() > 0 ? displacement.normalize() : Vector3(0, 1, 0);
-            float spread_force = current_speed * 0.03f * (1.0f - dist_factor);
-            p.velocity += outward_dir * spread_force * dt;
-
-            // Update position
-            p.position += p.velocity * dt;
-
-            // Gradually slow down vertical velocity
-            float height_above_initial = p.position.y - p.initial_pos.y;
-            p.velocity.y *= (1.0f - dt * (1.5f + height_above_initial * 0.5f));
-
-            // Fade out effect
-            float life_factor = p.lifetime / p.max_lifetime;
-            float height_factor = clamp(1.0f - height_above_initial * 0.3f, 0.0f, 1.0f);
-            float distance_factor = clamp(1.0f - dist_factor, 0.0f, 1.0f);
-            //p.alpha = life_factor * height_factor * distance_factor;
-            p.alpha = std::max(0.2f, life_factor * height_factor * distance_factor);
-
-        }
-    }
-
-    // **Ensure Continuous Particle Generation Without Overloading**
-    float base_spawn_rate = 50.0f;  
-    float spawn_amount = base_spawn_rate * (current_speed / 3.0f);
-    //spawn_amount = std::min(spawn_amount, static_cast<float>(MAX_SNOW_PARTICLES) / 5.0f); // Prevent lag spikes
-    spawn_amount = std::max(spawn_amount, 55.0f);  // At least 5 particles per frame
-
-
-    for (int i = 0; i < MAX_SNOW_PARTICLES && spawn_amount > 0; i++) {
-        if (particles[i].lifetime <= 0) {
-            spawn_amount--; // Reduce counter as we spawn new particles
-
-            //Vector3 velocity_dir = velocity.normalize();
-            Vector3 velocity_copy = velocity;  // Make a copy
-            Vector3 velocity_dir = velocity_copy.normalize();
-
-            float turning_factor = abs(velocity_dir.x);
-            float lateral_spread = turning_factor * ((rand() % 200) - 100) * 0.01f;
-            float back_spread = ((rand() % 100) * 0.01f);
-
-            //float lifetime = 3.0f + (rand() % 200) * 0.01f;
-            float lifetime = (2.5f + (rand() % 150) * 0.01f) * (1.0f / (1.0f + current_speed * 0.1f));
-
-            particles[i].lifetime = lifetime;
-            particles[i].max_lifetime = lifetime;
-            particles[i].alpha = 1.0f;
-
-            float ground_offset = 0.05f;
-            particles[i].initial_pos = Vector3(
-                pos.x + lateral_spread * velocity_dir.x * 1.5f,
-                pos.y - 0.5f + ground_offset, 
-                pos.z - back_spread * 2.0f
-            );
-            particles[i].position = particles[i].initial_pos;
-
-            float up_speed = 1.0f + (rand() % 100) * 0.015f;
-            float side_speed = turning_factor * current_speed * 0.4f;
-            Vector3 base_velocity = velocity_dir * current_speed * 0.25f;
-
-            particles[i].velocity = base_velocity + Vector3(
-                side_speed * (lateral_spread > 0 ? 1 : -1),
-                up_speed,
-                -back_spread * current_speed * 0.3f
-            );
-        }
-    }
-
-    // **Render Particles**
-    glPointSize(6.0f + (rand() % 100) * 0.02f);
-    glBegin(GL_POINTS);
-    for (int i = 0; i < MAX_SNOW_PARTICLES; i++) {
-        if (particles[i].lifetime > 0) {
-            glColor4f(1.0f, 1.0f, 1.0f, particles[i].alpha);
-            glVertex3f(particles[i].position.x, particles[i].position.y, particles[i].position.z);
-        }
-    }
-    glEnd();
-
-    // Restore GL states
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
+void Player::spawnFallingSnowParticle(int index) {
+    Vector3 player_pos = model.getTranslation();
+    Vector3 front = model.frontVector().normalize();
+    float radius = 30.0f;  // Area around player for snow
+    
+    // Spawn snow in a more visible area
+    falling_snow[index].position = Vector3(
+        player_pos.x + (rand() % 1000 - 500) * 0.06f,  // Random X spread
+        player_pos.y + 15.0f + (rand() % 100) * 0.1f,  // Lower height, more visible
+        player_pos.z + front.z * 10.0f + (rand() % 1000 - 500) * 0.06f  // Bias towards front
+    );
+    falling_snow[index].offset = (rand() % 1000) * 0.001f * 2 * M_PI;
+    falling_snow[index].speed = 6.0f + (rand() % 100) * 0.04f;  // Slightly slower for better visibility
+    falling_snow[index].alpha = 0.8f + (rand() % 20) * 0.01f;   // More visible
+    falling_snow[index].active = true;
 }
 
+void Player::updateFallingSnow(float dt, const Vector3& camera_pos) {
+    Vector3 player_pos = model.getTranslation();
+    Vector3 front = model.frontVector().normalize();
+    float camera_speed = velocity.length();
+    
+    for (int i = 0; i < MAX_FALLING_SNOW; i++) {
+        if (!falling_snow[i].active) {
+            spawnFallingSnowParticle(i);
+            continue;
+        }
 
-void Player::renderSnowParticles(Camera* camera) {
+        // Update position with cosine movement
+        falling_snow[i].position.y -= falling_snow[i].speed * dt;
+        falling_snow[i].position.x += cos(falling_snow[i].offset + Game::instance->time * 2.0f) * dt * 0.5f; // Gentle sway
+        falling_snow[i].position.z += sin(falling_snow[i].offset + Game::instance->time * 1.5f) * dt * 0.3f; // Add some Z sway
+
+        // Respawn if too far from player or too low
+        if (falling_snow[i].position.y < player_pos.y - 5.0f ||  // Reduced fall distance
+            (falling_snow[i].position - player_pos).length() > 40.0f) {  // Reduced respawn distance
+            spawnFallingSnowParticle(i);
+        }
+    }
+}
+
+void Player::renderFallingSnow(Camera* camera) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDepthMask(GL_FALSE);  // Disable depth writes for particles
-
-    // Render snow particles without updating
-    glPointSize(6.0f);
+    glDepthMask(GL_FALSE);
+    
+    glPointSize(2.5f);  // Slightly smaller points for better visual
     glBegin(GL_POINTS);
-    for (int i = 0; i < MAX_SNOW_PARTICLES; i++) {
-        if (particles[i].lifetime > 0) {
-            glColor4f(1.0f, 1.0f, 1.0f, particles[i].alpha);
-            glVertex3f(particles[i].position.x, particles[i].position.y, particles[i].position.z);
+    for (int i = 0; i < MAX_FALLING_SNOW; i++) {
+        if (falling_snow[i].active) {
+            glColor4f(1.0f, 1.0f, 1.0f, falling_snow[i].alpha);
+            glVertex3f(falling_snow[i].position.x, 
+                      falling_snow[i].position.y, 
+                      falling_snow[i].position.z);
         }
     }
     glEnd();
-
-    // Restore OpenGL states
+    
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
 }
-
 
 void Player::render(Camera* camera)
 {
     // First render the animated player mesh
     EntityMesh::render(camera);
 
-    //Render snow particles
-    //renderSnowParticles(camera);
+    // Render falling snow
+    renderFallingSnow(camera);
 
     // Debug visualization
     Shader* debug_shader = Shader::Get("data/shaders/basic.vs", "data/shaders/flat.fs");
@@ -289,7 +235,9 @@ void Player::update(float seconds_elapsed)
     //if 2 is pressed spawn the player in map2
     if (Input::isKeyPressed(SDL_SCANCODE_2)) {
         //position = Vector3(250.0f, 200.0f, -25.0f);
-        position = Vector3(340.614, -647.0f, 245.0f);
+        //position = Vector3(340.614, -647.0f, 245.0f);
+        position = Vector3(367.0f, -762.0f, 228.0f);
+
         model.setTranslation(position.x, position.y, position.z);
         current_speed = 0.0f;
         velocity = Vector3(0.0f);
@@ -801,7 +749,7 @@ void Player::update(float seconds_elapsed)
     //animations
     animator.update(seconds_elapsed);
 
-    //updateSnowParticles(seconds_elapsed);
+    updateFallingSnow(seconds_elapsed, World::get_instance()->camera->eye);
 
     EntityMesh::update(seconds_elapsed);
 }
@@ -873,8 +821,6 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
     std::vector<sCollisionData> collisions;
     std::vector<sCollisionData> ground_collisions;
 
-    
-
     float ground_height = 0.0f;
     World::get_instance()->test_scene_collisions(target_position, collisions, ground_collisions, eCollisionFilter::ALL);
 
@@ -885,7 +831,7 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
     //Ground collisions
     float best_up_factor = 0.3f; // Minimum threshold for valid slopes
     for (const sCollisionData& collision : ground_collisions) {
-        float up_factor = fabs(collision.colNormal.dot(Vector3::UP));
+        float up_factor = collision.colNormal.dot(Vector3::UP);
         if (up_factor > best_up_factor) {  //Allow landing on sloped surfaces
             is_grounded = true;
             ground_height = collision.colPoint.y;
@@ -911,7 +857,6 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
         }
 
         
-    
         //Skip collisions that are flat (ramps,etc
         if (up_factor > 0.6f) {
             continue;
@@ -925,9 +870,10 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
             if (collider->name != "scene/ice_jump_A__sn_jumpSnow01/ice_jump_A__sn_jumpSnow01.obj" 
                 && collider->name != "scene/CDas_Board_A__ef_dashboard/CDas_Board_A__ef_dashboard.obj"
                 && collider->name != "scene/CGli_Board__ef_glideboard/CGli_Board__ef_glideboard.obj"
-                && collider->name != "scene/polySurface8364587_1__sn_snowroad04s/polySurface8364587_1__sn_snowroad04s.obj"
                 && collider->name != "scene/polySurface8364601__sn_GoalLine/polySurface8364601__sn_GoalLine.obj"
-                && collider->name !=  "scene/polySurface8363355__sn_snowroad_Ktens/polySurface8363355__sn_snowroad_Ktens.obj") {
+                && collider->name !=  "scene/polySurface8363355__sn_snowroad_Ktens/polySurface8363355__sn_snowroad_Ktens.obj"
+                && collider->name != "scene/TreeJump001__sn_woodRoad01/TreeJump001__sn_woodRoad01.obj"
+                && collider->name != "scene/CGra_Flame__PanelFlame1/CGra_Flame__PanelFlame1.obj") {
                 
                 // Update collision tracking
                 double current_time = Game::instance->time;

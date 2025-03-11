@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 		size = getDesktopSize(0);
 
 	//create the game window (WINDOW_WIDTH and WINDOW_HEIGHT are two macros defined in includes.h)
-	SDL_Window* window = createWindow("TJE Skier Game", (int)size.x, (int)size.y, fullscreen );
+	SDL_Window* window = createWindow("SnowHill Madness", (int)size.x, (int)size.y, fullscreen );
 	if (!window)
 		return 0;
 	int window_width, window_height;

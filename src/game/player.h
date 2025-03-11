@@ -15,24 +15,26 @@ enum eAnimationState {
     CELEBRATE
 };
 
-#define MAX_SNOW_PARTICLES 400
+#define MAX_FALLING_SNOW 500  // Constant for falling snow
 
-struct SnowParticle {
+struct FallingSnow {
     Vector3 position;
-    Vector3 velocity;
-    Vector3 initial_pos;  // Store initial spawn position
-    float lifetime;
+    float offset;      // For cosine movement
+    float speed;       // Fall speed
     float alpha;
-    float max_lifetime;   // Store initial lifetime for fade calculations
+    bool active;
 };
 
 class Player : public EntityMesh {
 public:
-    // Made public so World can access particles
-    SnowParticle particles[MAX_SNOW_PARTICLES];
-    void updateSnowParticles(float dt);
-    void renderSnowParticles(Camera* camera);
     float air_time = 0.0f;
+    
+    // Members for falling snow
+    FallingSnow falling_snow[MAX_FALLING_SNOW];
+    void updateFallingSnow(float dt, const Vector3& camera_pos);
+    void renderFallingSnow(Camera* camera);
+    void spawnFallingSnowParticle(int index);
+
 private:
     float walk_speed = 20.0f;
     Vector3 velocity = Vector3(0.0f);

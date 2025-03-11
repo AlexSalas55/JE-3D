@@ -40,12 +40,13 @@ void PlayStage::restart() {
     show_end_screen = false;
     player1_is_winner = false;
 
+
     // Reset player positions
     Vector3 start_pos(345.0f, 184.0f, 37.0f);
     if (world->player) {
         world->player->model.setTranslation(start_pos.x, start_pos.y, start_pos.z);
         world->player->setRecoveryPosition(start_pos);
-        
+
         // girar el jugador 1 180 grados
         world->camera_yaw = M_PI;
     }
@@ -53,13 +54,14 @@ void PlayStage::restart() {
     if (world->player2) {
         world->player2->model.setTranslation(start_pos.x, start_pos.y, start_pos.z + 10.0f);
         world->player2->setRecoveryPosition(start_pos);
-        
+
         // girar el jugador 2 180 grados
         world->camera2_yaw = M_PI;
     }
 }
 
 void PlayStage::onEnter(Stage* prev_stage) {
+
     restart();
 
     // Reset chronometers and states when entering stage
@@ -73,10 +75,10 @@ void PlayStage::onEnter(Stage* prev_stage) {
     // Inicializar el jugador 2 si el modo multijugador está activado
     Game* game = Game::instance;
     World* world = World::get_instance();
-    
+
     // Establecer que NO estamos en el escenario de entrenamiento
     world->setTrainingStage(false);
-    
+
     // girar el jugador 1 180 grados
     world->camera_yaw = M_PI; // 180 grados en radianes
     
@@ -123,6 +125,8 @@ void PlayStage::onEnter(Stage* prev_stage) {
             world->skybox2 = new EntityMesh(Mesh::Get("data/meshes/cubemap.ASE"), world->skybox->material);
         }
     }
+    
+    
 
     // Lock/unlock cursor depending on free camera
     bool must_lock = !World::get_instance()->free_camera;
@@ -497,7 +501,7 @@ void MenuStage::init() {
     logo->mesh->createQuad(width * 0.5f, height * 0.3f, logo_size, logo_size, true);
     logo->material = logo_mat;
 
-    // Play button (a la izquierda)
+    // Play button
     Material play_mat;
     play_mat.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
     play_mat.diffuse = Texture::Get("data/textures/ui/play_button.png");
@@ -585,21 +589,22 @@ void MenuStage::update(double seconds_elapsed) {
     const float BUTTON_WIDTH = 160.0f;
     const float BUTTON_HEIGHT = BUTTON_WIDTH / (16.0f/9.0f);
     float center_x = width * 0.5f;
-    
+
     // Posiciones actualizadas para los botones en paralelo
     float play_x = center_x - BUTTON_WIDTH * 0.6f;
+    
     float play_y = height * 0.55f;
     bool mouse_over_play = mouse_pos.x >= (play_x - BUTTON_WIDTH/2) && 
                           mouse_pos.x <= (play_x + BUTTON_WIDTH/2) &&
                           mouse_pos.y >= (play_y - BUTTON_HEIGHT/2) && 
                           mouse_pos.y <= (play_y + BUTTON_HEIGHT/2);
-    
+
     float multiplayer_x = center_x + BUTTON_WIDTH * 0.6f;
     float multiplayer_y = height * 0.55f;
     bool mouse_over_multiplayer = mouse_pos.x >= (multiplayer_x - BUTTON_WIDTH/2) && 
                                  mouse_pos.x <= (multiplayer_x + BUTTON_WIDTH/2) &&
                                  mouse_pos.y >= (multiplayer_y - BUTTON_HEIGHT/2) && 
-                                 mouse_pos.y <= (multiplayer_y + BUTTON_HEIGHT/2);
+                                 mouse_pos.y <= (multiplayer_y + BUTTON_HEIGHT/2); 
     
     float training_y = height * 0.7f;
     bool mouse_over_training = mouse_pos.x >= (center_x - BUTTON_WIDTH/2) && 
@@ -622,7 +627,7 @@ void MenuStage::update(double seconds_elapsed) {
     } else {
         play_button->material.diffuse = play_normal;
     }
-    
+
     if (mouse_over_multiplayer) {
         multiplayer_button->material.diffuse = multiplayer_hover_tex;
         if (Input::wasMousePressed(SDL_BUTTON_LEFT)) {
@@ -717,10 +722,10 @@ void TrainingStage::restart() {
     show_tutorial = true;
 }
 
-void TrainingStage::onEnter(Stage* prev_stage) {
+void TrainingStage::onEnter(Stage* prev_stage) {    
     Game* game = Game::instance;
     World* world = World::get_instance();
-    
+
     // Establecer que estamos en el escenario de entrenamiento
     world->setTrainingStage(true);
     

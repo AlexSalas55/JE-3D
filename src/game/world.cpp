@@ -146,7 +146,7 @@ void World::render() {
     glEnable(GL_DEPTH_TEST);
     
     // Draw the floor grid
-    drawGrid();
+    //drawGrid();
     
     // Set light parameters for Phong shader before rendering scene
     if (phong_shader) {
@@ -320,9 +320,18 @@ void World::update(double seconds_elapsed) {
 
         // Actualizar la cámara con las nuevas posiciones
         camera->lookAt(eye, center, Vector3(0, 1, 0));
+        /*
+        // Add roll for player 1
+        Matrix44 rollMatrix;
+        rollMatrix.setRotation(camera_roll * DEG2RAD, camera->center - camera->eye);
+        camera->up = rollMatrix.rotateVector(Vector3(0,1,0));
+        */
 
         // Handle camera for player 2 in multiplayer mode
         if (Game::instance->multiplayer_enabled && player2) {
+            // Use the same camera pitch as player 1 for consistent behavior
+            //camera2_pitch = camera_pitch;
+            
             Matrix44 mYaw2;
             mYaw2.setRotation(camera2_yaw, Vector3(0, 1, 0));
             Matrix44 mPitch2;
@@ -331,11 +340,10 @@ void World::update(double seconds_elapsed) {
             Vector3 front2 = (mPitch2 * mYaw2).frontVector().normalize();
             Vector3 player2_pos = player2->model.getTranslation();
             
-            // Configuración de la cámara en tercera persona para el jugador 2
+            // Third-person camera for player 2
             float orbit_dist2 = 6.0f;
             center2 = player2_pos + Vector3(0.f, 0.8f, 0.0f);
             Vector3 target_eye2 = player2_pos - front2 * orbit_dist2 + Vector3(0.0f, 1.5f, 0.0f);
-            
             // Aplicar detección de colisiones para ajustar la posición de la cámara del jugador 2
             eye2 = adjustCameraPosition(target_eye2, center2, 0.5f);
             
@@ -346,9 +354,14 @@ void World::update(double seconds_elapsed) {
                 Vector3 dir2 = (eye2 - center2).normalize();
                 eye2 = center2 + dir2 * min_distance2;
             }
-            
             // Actualizar la cámara del jugador 2
             Game::instance->camera2->lookAt(eye2, center2, Vector3(0, 1, 0));
+            /*
+            // Add roll for player 2
+            Matrix44 rollMatrix2;
+            rollMatrix2.setRotation(camera2_roll * DEG2RAD, Game::instance->camera2->center - Game::instance->camera2->eye);
+            Game::instance->camera2->up = rollMatrix2.rotateVector(Vector3(0,1,0));
+            */
         }
     }
 
@@ -383,13 +396,11 @@ sCollisionData World::raycast(const Vector3& origin, const Vector3& direction, i
     sCollisionData collision;
     collision.distance = max_ray_dist; // Inicializar con la distancia máxima
 
-    // Iterar sobre todos los hijos del nodo raíz
     for (auto e : root->children) {
-        // Ignorar al jugador para evitar colisiones con él mismo
+        //Ignorar al jugador para evitar colisiones con si mismo
         if (e == player || e == player2) {
             continue;
         }
-
         EntityCollider* ec = dynamic_cast<EntityCollider*>(e);
         if (ec == nullptr || !(ec->getLayer() & layer)) {
             continue;
@@ -403,22 +414,18 @@ sCollisionData World::raycast(const Vector3& origin, const Vector3& direction, i
             continue;
         }
 
-        // Hubo una colisión! Actualizar si es la más cercana
+        // There was a collision! Update if nearest..
         float new_distance = (col_point - origin).length();
         if (new_distance < collision.distance) {
             collision = { col_point, col_normal, new_distance, true, ec };
-            
-            // Debug: imprimir información sobre la colisión
-            std::cout << "Raycast hit: " << ec->name << " at distance " << new_distance << std::endl;
         }
 
         if (!closest) {
             return collision;
         }
+
     }
-    
-    // Si no se encontró ninguna colisión, devolver la estructura con collider = nullptr
-    return collision;
+	return collision;
 }
 
 void World::test_scene_collisions(const Vector3& target_position, std::vector<sCollisionData>& collisions, std::vector<sCollisionData>& ground_collisions, eCollisionFilter filter)
@@ -468,7 +475,7 @@ Vector3 World::adjustCameraPosition(const Vector3& target_eye, const Vector3& ta
             // Añadimos un componente vertical para elevar la cámara y obtener una vista más aérea
             Vector3 up_offset = Vector3(0, 1.0f, 0) * (desired_distance - new_distance) * 0.5f;
             Vector3 adjusted_eye = adjusted_origin + dir * new_distance + up_offset;
-            
+                        
             // Verificar que la nueva posición no esté dentro de ninguna malla
             if (isPointInsideMesh(adjusted_eye)) {
                 // Si aún está dentro, intentar acercar la cámara al jugador con diferentes ángulos

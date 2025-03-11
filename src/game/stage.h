@@ -52,9 +52,10 @@ private:
 
     // Texturas normales
     Texture* play_normal;
-    Texture* multiplayer_normal;
     Texture* training_normal;
     Texture* exit_normal;
+    Texture* multiplayer_normal;
+    
 
     // Texturas hover
     Texture* play_hover_tex;
