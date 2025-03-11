@@ -1,6 +1,7 @@
 #pragma once
 #include "framework/input.h"
 #include "framework/entities/entityMesh.h"
+#include "framework/audio.h"
 
 class Entity;
 class EntityMesh;
@@ -38,6 +39,7 @@ public:
     void render() override;
     void update(double seconds_elapsed) override;
     void onEnter(Stage* prev_stage) override;
+    void onLeave(Stage* next_stage) override;
 
 private:
     EntityMesh* background;
@@ -58,6 +60,9 @@ private:
     Texture* training_hover_tex;
     Texture* exit_hover_tex;
     Texture* multiplayer_hover_tex;
+    
+    // Canal de audio para la música del menú
+    HCHANNEL menu_music_channel;
 };
 
 class PlayStage : public Stage {
@@ -67,5 +72,10 @@ public:
     void render() override;
     void update(double seconds_elapsed) override;
     void onEnter(Stage* prev_stage) override;
+    void onLeave(Stage* next_stage) override;
     void onKeyDown(SDL_KeyboardEvent event) override;
+
+private:
+    // Canal de audio para la música del modo de juego
+    HCHANNEL play_music_channel;
 }; 

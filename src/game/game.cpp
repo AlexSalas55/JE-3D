@@ -5,6 +5,7 @@
 #include "graphics/texture.h"
 #include "graphics/fbo.h"
 #include "graphics/shader.h"
+#include "framework/audio.h"
 #include "framework/input.h"
 #include "stage.h"
 #include "world.h"
@@ -54,6 +55,13 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 		Stage* stage = entry.second;
 		stage->init();
 	}
+
+	// inicializar audio
+	if (!Audio::Init()) {
+		std::cout << "Failed to initialize audio system!" << std::endl;
+	}
+
+
 	
 	goToStage(STAGE_MENU);
 

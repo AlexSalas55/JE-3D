@@ -3,6 +3,7 @@
 #include "graphics/texture.h"
 #include "graphics/shader.h"
 #include "framework/input.h"
+#include "framework/audio.h"
 #include "game/game.h"
 #include "game/world.h"
 #include "framework/entities/entity_collider.h"
@@ -196,6 +197,26 @@ void Player::update(float seconds_elapsed)
     Vector3 front = mYaw.frontVector().normalize();
     Vector3 right = mYaw.rightVector().normalize();
     Vector3 position = model.getTranslation();
+
+    // Gestionar el sonido del viento según la velocidad
+    float speed = velocity.length();
+    if (speed > 0.1f) {
+        // Calcular el volumen basado en la velocidad (entre 0 y 0.4)
+        float volume = clamp(speed / top_speed * 0.4f, 0.0f, 0.8f);
+        
+        // Iniciar el sonido si no está sonando
+        if (!is_wind_sound_playing) {
+            wind_sound_channel = Audio::Play("data/assets/audio/sound_wind.wav", volume, BASS_SAMPLE_LOOP);
+            is_wind_sound_playing = true;
+        } else {
+            // Ajustar el volumen si ya está sonando
+            BASS_ChannelSetAttribute(wind_sound_channel, BASS_ATTRIB_VOL, volume);
+        }
+    } else if (is_wind_sound_playing) {
+        // Detener el sonido si la velocidad es muy baja
+        Audio::Stop(wind_sound_channel);
+        is_wind_sound_playing = false;
+    }
 
     // Portal fall check
     float x_tolerance = 25.0f;  // Smaller tolerance for X
@@ -595,12 +616,18 @@ void Player::update(float seconds_elapsed)
         uphill_timer = 0.0f; // Reset timer when not facing uphill
     }
 
-    /////////////////////////////////// ANIMATION STATE SYSTEM ///////////////////////////////////
+    /////////////////////////////////// ANIMATION STATE SYSTEM + SOUNDS ///////////////////////////////////
     // TODO: collisions animations
     // if (animation_state != eAnimationState::JUMP) {
         // if key W was pressed, play the impulse animation
     if (is_grounded) {
         if (velocity.length() > 0.0f) {
+            // Reproducir sonido de movimiento si no está sonando ya
+            if (!is_move_sound_playing) {
+                move_sound_channel = Audio::Play("data/assets/audio/sound_move.wav", 0.2f);
+                is_move_sound_playing = true;
+            }
+            
             // Check if this is player2 and handle its controls
             if (this == World::get_instance()->player2) {
                 if (Input::isKeyPressed(SDL_SCANCODE_UP)) {
@@ -613,6 +640,19 @@ void Player::update(float seconds_elapsed)
                         animator.playAnimation("data/meshes/animations/brake.skanim");
                         animation_state = eAnimationState::BRAKE;
                     }
+                    
+                    // Detener sonido de movimiento si está sonando
+                    if (is_move_sound_playing) {
+                        Audio::Stop(move_sound_channel);
+                        is_move_sound_playing = false;
+                    }
+                    
+                    // Reproducir sonido de frenado si no está sonando ya
+                    if (!is_brake_sound_playing) {
+                        brake_sound_channel = Audio::Play("data/assets/audio/sound_brake.wav", 0.7f);
+                        is_brake_sound_playing = true;
+                    }
+                    
                     // Add braking physics
                     float brake_force = 3.0f * base_deceleration;
                     current_speed *= (1.0f - brake_force * seconds_elapsed);
@@ -626,6 +666,12 @@ void Player::update(float seconds_elapsed)
                         animator.playAnimation("data/meshes/animations/move.skanim");
                         animation_state = eAnimationState::MOVE;
                     }
+                    
+                    // Detener el sonido de frenado si está sonando
+                    if (is_brake_sound_playing) {
+                        Audio::Stop(brake_sound_channel);
+                        is_brake_sound_playing = false;
+                    }
                 }
             } else { // Player 1 controls
                 if (Input::isKeyPressed(SDL_SCANCODE_W)) {
@@ -638,7 +684,20 @@ void Player::update(float seconds_elapsed)
                         animator.playAnimation("data/meshes/animations/brake.skanim");
                         animation_state = eAnimationState::BRAKE;
                     }
-                     // Add braking physics
+                    
+                    // Detener sonido de movimiento si está sonando
+                    if (is_move_sound_playing) {
+                        Audio::Stop(move_sound_channel);
+                        is_move_sound_playing = false;
+                    }
+                    
+                    // Reproducir sonido de frenado si no está sonando ya
+                    if (!is_brake_sound_playing) {
+                        brake_sound_channel = Audio::Play("data/assets/audio/sound_brake.wav", 0.7f);
+                        is_brake_sound_playing = true;
+                    }
+                    
+                    // Add braking physics
                     float brake_force = 3.0f * base_deceleration; // Stronger than base deceleration
                     // Apply stronger deceleration when braking
                     current_speed *= (1.0f - brake_force * seconds_elapsed);
@@ -654,9 +713,27 @@ void Player::update(float seconds_elapsed)
                         animator.playAnimation("data/meshes/animations/move.skanim");
                         animation_state = eAnimationState::MOVE;
                     }
+                    
+                    // Detener el sonido de frenado si está sonando
+                    if (is_brake_sound_playing) {
+                        Audio::Stop(brake_sound_channel);
+                        is_brake_sound_playing = false;
+                    }
                 }
             }
         } else if (velocity.length() == 0.0f) {
+            // Detener sonido de movimiento si está sonando
+            if (is_move_sound_playing) {
+                Audio::Stop(move_sound_channel);
+                is_move_sound_playing = false;
+            }
+            
+            // Detener el sonido de frenado si está sonando
+            if (is_brake_sound_playing) {
+                Audio::Stop(brake_sound_channel);
+                is_brake_sound_playing = false;
+            }
+            
             // Celebrate animation with different keys for each player
             if (this == World::get_instance()->player2) {
                 if (Input::isKeyPressed(SDL_SCANCODE_M)) {
@@ -685,6 +762,18 @@ void Player::update(float seconds_elapsed)
             }
         }
     } else if (air_time > 0.45f) {
+        // Detener todos los sonidos cuando el jugador no está en contacto con el suelo
+        // (excepto el sonido del viento)
+        if (is_move_sound_playing) {
+            Audio::Stop(move_sound_channel);
+            is_move_sound_playing = false;
+        }
+        
+        if (is_brake_sound_playing) {
+            Audio::Stop(brake_sound_channel);
+            is_brake_sound_playing = false;
+        }
+        
         if (animation_state != eAnimationState::JUMP) {
             animator.playAnimation("data/meshes/animations/fall.skanim");
             animation_state = eAnimationState::JUMP;
@@ -694,6 +783,18 @@ void Player::update(float seconds_elapsed)
 
     //if player in the air make the player rotate
     if (!is_grounded) {
+        // Detener todos los sonidos cuando el jugador no está en contacto con el suelo
+        // (excepto el sonido del viento)
+        if (is_move_sound_playing) {
+            Audio::Stop(move_sound_channel);
+            is_move_sound_playing = false;
+        }
+        
+        if (is_brake_sound_playing) {
+            Audio::Stop(brake_sound_channel);
+            is_brake_sound_playing = false;
+        }
+        
         if (Input::isKeyPressed(SDL_SCANCODE_SPACE)) {
             model.rotate(velocity.length() * 0.2f, Vector3(0, 1, 0));
         }

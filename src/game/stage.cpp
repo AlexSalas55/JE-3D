@@ -20,6 +20,9 @@ void PlayStage::onEnter(Stage* prev_stage) {
     // Lock/unlock cursor depending on free camera
     bool must_lock = !World::get_instance()->free_camera;
     Game::instance->setMouseLocked(must_lock);
+    
+    // Reproducir música del modo de juego con BASS_SAMPLE_LOOP para que se repita
+    play_music_channel = Audio::Play("data/assets/audio/music/music_play1.wav", 0.2f, BASS_SAMPLE_LOOP);
 }
 
 void PlayStage::render() {
@@ -257,4 +260,23 @@ void MenuStage::update(double seconds_elapsed) {
 
 void MenuStage::onEnter(Stage* prev_stage) {
     Game::instance->setMouseLocked(false);
+    
+    // Reproducir música del menú con BASS_SAMPLE_LOOP para que se repita
+    menu_music_channel = Audio::Play("data/assets/audio/music/music_menu.wav", 0.4f, BASS_SAMPLE_LOOP);
+}
+
+void MenuStage::onLeave(Stage* next_stage) {
+    // Detener la música del menú cuando salimos de esta etapa
+    if (menu_music_channel) {
+        Audio::Stop(menu_music_channel);
+        menu_music_channel = 0;
+    }
+}
+
+void PlayStage::onLeave(Stage* next_stage) {
+    // Detener la música del modo de juego cuando salimos de esta etapa
+    if (play_music_channel) {
+        Audio::Stop(play_music_channel);
+        play_music_channel = 0;
+    }
 }

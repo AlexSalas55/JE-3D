@@ -2,6 +2,7 @@
 #include "framework/entities/entityMesh.h"
 #include "graphics/material.h"
 #include "framework/animation.h"
+#include "framework/audio.h"
 
 enum eAnimationState {
     IDLE,
@@ -102,6 +103,14 @@ private:
     void handleUphillMovement(float seconds_elapsed, float slope_factor);
     void handleSlopeMovement(float seconds_elapsed, const Vector3& world_direction, const Vector3& slope_direction);
     
+
+    // Audio variables
+    HCHANNEL move_sound_channel = 0;
+    HCHANNEL brake_sound_channel = 0;
+    HCHANNEL wind_sound_channel = 0;
+    bool is_move_sound_playing = false;
+    bool is_brake_sound_playing = false;
+    bool is_wind_sound_playing = false;
 
 public:
     Player() {};
