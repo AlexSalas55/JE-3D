@@ -74,6 +74,7 @@ public:
     void onEnter(Stage* prev_stage) override;
     void onLeave(Stage* next_stage) override;
     void onKeyDown(SDL_KeyboardEvent event) override;
+    void restart();
 
 private:
     HCHANNEL play_music_channel;    // Canal de audio para la música del modo de juego
@@ -88,5 +89,13 @@ private:
     bool player1_checkpoint = false; // Track if player 1 passed checkpoint
     bool player2_checkpoint = false; // Track if player 2 passed checkpoint
     
+    // End game UI state
+    bool show_end_screen = false;
+    bool player1_is_winner = false;  // For multiplayer mode
+    Vector2 restart_button_pos;
+    Vector2 menu_button_pos;
+    Vector2 button_size;
+
+    void renderEndScreen();
     void renderChronometer(double time, int x, int y); // Helper to render time
 }; 

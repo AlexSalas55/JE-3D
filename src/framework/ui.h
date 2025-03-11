@@ -4,11 +4,6 @@
 #include "framework/input.h"
 #include <SDL2/SDL.h>
 
-enum eUIButtonID {
-    UI_BUTTON_UNDEFINED = -1,
-    UI_BUTTON_PLAY,
-    UI_BUTTON_EXIT
-};
 
 class UI {
 public:

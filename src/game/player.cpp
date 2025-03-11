@@ -843,7 +843,7 @@ void Player::updateCameraPitch(float target_angle) {
 
 void Player::handleUphillMovement(float seconds_elapsed, float slope_factor) {
     bool is_player2 = (this == World::get_instance()->player2);
-    bool is_moving_forward = is_player2 ? Input::isKeyPressed(SDL_SCANCODE_U) : Input::isKeyPressed(SDL_SCANCODE_W);
+    bool is_moving_forward = is_player2 ? Input::isKeyPressed(SDL_SCANCODE_UP) : Input::isKeyPressed(SDL_SCANCODE_W);
     
     // Get player-specific forward direction and slope
     Vector3 player_forward = model.frontVector().normalize();
@@ -941,7 +941,7 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
                 last_collision_time = current_time;
 
                 // Check if we need to recover position
-                if (collision_count >= 6 && current_time - last_collision_time <= 3.0) {
+                if (collision_count >= 6000 && current_time - last_collision_time <= 3.0) {
                     // Reset collision tracking
                     collision_count = 0;
                     last_collision_time = 0.0;

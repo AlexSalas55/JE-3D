@@ -6,6 +6,7 @@
 #include "game/world.h"
 #include "framework/camera.h"
 
+
 bool UI::addButton(Vector2 position, Vector2 size, const char* texture_path) {
     Vector2 mouse_pos = Input::mouse_position;
     bool is_hovered = false;

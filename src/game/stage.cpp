@@ -14,9 +14,50 @@ void PlayStage::init() {
     if (!World::get_instance()->root) {
         World::get_instance(); // Esto creará una nueva instancia de World si no existe
     }
+
+    // Initialize button positions and sizes
+    Game* game = Game::instance;
+    button_size = Vector2(160.0f, 90.0f);
+    restart_button_pos = Vector2(game->window_width * 0.5f, game->window_height * 0.6f);
+    menu_button_pos = Vector2(game->window_width * 0.5f, game->window_height * 0.7f);
+}
+
+void PlayStage::restart() {
+    World* world = World::get_instance();
+    Game* game = Game::instance;
+
+    // Reset all timers and states
+    chronometer1 = 0.0;
+    chronometer2 = 0.0;
+    timer1_active = false;
+    timer2_active = false;
+    player1_finished = false;
+    player2_finished = false;
+    player1_checkpoint = false;
+    player2_checkpoint = false;
+    checkpoint1_time = 0.0;
+    checkpoint2_time = 0.0;
+    show_end_screen = false;
+    player1_is_winner = false;
+
+
+    // Reset player positions
+    Vector3 start_pos(345.0f, 184.0f, 37.0f);
+    if (world->player) {
+        world->player->model.setTranslation(start_pos.x, start_pos.y, start_pos.z);
+        world->player->setRecoveryPosition(start_pos);
+    }
+
+    if (world->player2) {
+        world->player2->model.setTranslation(start_pos.x, start_pos.y, start_pos.z + 10.0f);
+        world->player2->setRecoveryPosition(start_pos);
+    }
 }
 
 void PlayStage::onEnter(Stage* prev_stage) {
+
+    restart();
+
     // Reset chronometers and states when entering stage
     chronometer1 = 0.0;
     chronometer2 = 0.0;
@@ -88,9 +129,80 @@ void PlayStage::render() {
                 (int)((chronometer2 - (int)chronometer2) * 1000));
             drawText(window_width - 300, y_offset, p2_time, Vector3(0,1,1), 2);
         }
+
+    }
+
+    // Render end screen if game is finished
+    if (show_end_screen) {
+        renderEndScreen();
     }
     
     glDisable(GL_BLEND);
+}
+
+void PlayStage::renderEndScreen() {
+    Game* game = Game::instance;
+    int window_width = game->window_width;
+    int window_height = game->window_height;
+
+    // Semi-transparent background
+    glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+
+    // Title and times
+    char title[128];
+    Vector3 title_color;
+    
+    if (game->multiplayer_enabled) {
+        if (player1_is_winner) {
+            sprintf(title, "Player 1 Wins!");
+            title_color = Vector3(1,1,0);
+        } else {
+            sprintf(title, "Player 2 Wins!");
+            title_color = Vector3(0,1,1);
+        }
+    } else {
+        sprintf(title, "Race Complete!");
+        title_color = Vector3(1,1,1);
+    }
+
+    // Draw title
+    drawText(window_width * 0.5f - strlen(title) * 10, window_height * 0.35f, title, title_color, 3);
+
+    // Draw times
+    char time_str[64];
+    if (game->multiplayer_enabled) {
+        sprintf(time_str, "Final Time: %02d:%02d.%03d", 
+            (int)((player1_is_winner ? chronometer1 : chronometer2) / 60.0),
+            (int)(player1_is_winner ? chronometer1 : chronometer2) % 60,
+            (int)((player1_is_winner ? chronometer1 : chronometer2) - (int)(player1_is_winner ? chronometer1 : chronometer2)) * 1000);
+    } else {
+        sprintf(time_str, "Final Time: %02d:%02d.%03d", 
+            (int)(chronometer1 / 60.0),
+            (int)chronometer1 % 60,
+            (int)((chronometer1 - (int)chronometer1) * 1000));
+    }
+    drawText(window_width * 0.5f - strlen(time_str) * 8, window_height * 0.45f, time_str, Vector3(1,1,1), 2);
+
+    // Show checkpoint time
+    if (game->multiplayer_enabled) {
+        if ((player1_is_winner && player1_checkpoint) || (!player1_is_winner && player2_checkpoint)) {
+            sprintf(time_str, "Checkpoint: %02d:%02d.%03d", 
+                (int)((player1_is_winner ? checkpoint1_time : checkpoint2_time) / 60.0),
+                (int)(player1_is_winner ? checkpoint1_time : checkpoint2_time) % 60,
+                (int)((player1_is_winner ? checkpoint1_time : checkpoint2_time) - (int)(player1_is_winner ? checkpoint1_time : checkpoint2_time)) * 1000);
+            drawText(window_width * 0.5f - strlen(time_str) * 8, window_height * 0.5f, time_str, Vector3(0.5,1,0.5), 2);
+        }
+    } else if (player1_checkpoint) {
+        sprintf(time_str, "Checkpoint: %02d:%02d.%03d", 
+            (int)(checkpoint1_time / 60.0),
+            (int)checkpoint1_time % 60,
+            (int)((checkpoint1_time - (int)checkpoint1_time) * 1000));
+        drawText(window_width * 0.5f - strlen(time_str) * 8, window_height * 0.5f, time_str, Vector3(0.5,1,0.5), 2);
+    }
+
+    // Draw instructions instead of buttons
+    drawText(window_width * 0.5f - 120, window_height * 0.6f, "Press ENTER to restart", Vector3(1,1,1), 2);
+    drawText(window_width * 0.5f - 120, window_height * 0.65f, "Press DELETE to exit", Vector3(1,1,1), 2);
 }
 
 void PlayStage::update(double seconds_elapsed) {
@@ -99,63 +211,65 @@ void PlayStage::update(double seconds_elapsed) {
     
     // Checkpoint and finish line positions
     Vector3 checkpoint_pos(367.0f, -762.0f, 228.0f);
-    Vector3 finish_line_pos(-330.057f, -1408.09f, -667.831f); // Center of finish line
+    Vector3 finish_line_pos(-330.057f, -1408.09f, -667.831f);
     float checkpoint_threshold = 15.0f;
-    float finish_threshold = 20.0f; // Slightly larger threshold for finish line
+    float finish_threshold = 20.0f;
     
     // Player 1 logic
     Vector3 player1_pos = world->player->model.getTranslation();
     Vector3 start_pos(345.0f, 184.0f, 37.0f);
     if (!player1_finished) {
-        // Start timer when player moves from start position
         if (!timer1_active && (player1_pos - start_pos).length() > 0.1f) {
             timer1_active = true;
         }
         
-        // Update timer if active
         if (timer1_active) {
             chronometer1 += seconds_elapsed;
         }
         
-        // Check for checkpoint
         if (!player1_checkpoint && (player1_pos - checkpoint_pos).length() < checkpoint_threshold) {
             checkpoint1_time = chronometer1;
             player1_checkpoint = true;
-            world->player->setRecoveryPosition(checkpoint_pos); // Set recovery position to checkpoint
+            world->player->setRecoveryPosition(checkpoint_pos);
         }
         
-        // Check if player has finished
         if ((player1_pos - finish_line_pos).length() < finish_threshold) {
             timer1_active = false;
             player1_finished = true;
+            if (!game->multiplayer_enabled) {
+                show_end_screen = true;
+                chronometer1 = chronometer1;  // Save final time
+            } else if (!player2_finished) {
+                player1_is_winner = true;
+                show_end_screen = true;
+            }
         }
     }
     
-    // Player 2 logic (if multiplayer is enabled)
     if (game->multiplayer_enabled && world->player2) {
         Vector3 player2_pos = world->player2->model.getTranslation();
         if (!player2_finished) {
-            // Start timer when player moves from start position
             if (!timer2_active && (player2_pos - start_pos).length() > 0.1f) {
                 timer2_active = true;
             }
             
-            // Update timer if active
             if (timer2_active) {
                 chronometer2 += seconds_elapsed;
             }
             
-            // Check for checkpoint
             if (!player2_checkpoint && (player2_pos - checkpoint_pos).length() < checkpoint_threshold) {
                 checkpoint2_time = chronometer2;
                 player2_checkpoint = true;
-                world->player2->setRecoveryPosition(checkpoint_pos); // Set recovery position to checkpoint
+                world->player2->setRecoveryPosition(checkpoint_pos);
             }
             
-            // Check if player has finished
             if ((player2_pos - finish_line_pos).length() < finish_threshold) {
                 timer2_active = false;
                 player2_finished = true;
+                if (!player1_finished) {
+                    player1_is_winner = false;
+                    show_end_screen = true;
+                }
             }
         }
     }
@@ -181,6 +295,44 @@ void PlayStage::renderChronometer(double time, int x, int y) {
 }
 
 void PlayStage::onKeyDown(SDL_KeyboardEvent event) {
+    if (show_end_screen) {
+        if (Input::wasKeyPressed(SDL_SCANCODE_BACKSPACE)) {
+            Game* game = Game::instance;
+            World* world = World::get_instance();
+            // Clean up player 2 and its resources if multiplayer is enabled
+            if (game->multiplayer_enabled) {
+                if (world->player2) {
+                    // Stop any ongoing animations first
+                    world->player2->animator.stopAnimation();
+                    Player* temp_player = world->player2;
+                    world->player2 = nullptr;  // Set to null first to avoid any potential access
+                    world->root->removeChild(temp_player);
+                    delete temp_player;
+                }
+                if (game->camera2) {
+                    Camera* temp_camera = game->camera2;
+                    game->camera2 = nullptr;
+                    delete temp_camera;
+                }
+                if (world->skybox2) {
+                    EntityMesh* temp_skybox = world->skybox2;
+                    world->skybox2 = nullptr;
+                    delete temp_skybox;
+                }
+                // Disable multiplayer mode
+                game->multiplayer_enabled = false;
+            }
+            // Reset and restart game
+            Game::instance->goToStage(STAGE_MENU);
+            show_end_screen = false;
+        }
+        else if (Input::wasKeyPressed(SDL_SCANCODE_RETURN)) {
+            Game::instance->goToStage(STAGE_PLAY);
+            show_end_screen = false;
+        }
+        return;
+    }
+
     if (event.keysym.scancode == SDL_SCANCODE_P) {
         Game* game = Game::instance;
         World* world = World::get_instance();
