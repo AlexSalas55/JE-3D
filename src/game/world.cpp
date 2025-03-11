@@ -207,9 +207,9 @@ void World::update(double seconds_elapsed) {
         
         if (Game::instance->multiplayer_enabled && player2) {
             // Handle Player 2 controls (H and K for camera rotation)
-            if (Input::isKeyPressed(SDL_SCANCODE_H))
+            if (Input::isKeyPressed(SDL_SCANCODE_LEFT))
                 camera2_yaw -= seconds_elapsed * rotation_speed;
-            if (Input::isKeyPressed(SDL_SCANCODE_K))
+            if (Input::isKeyPressed(SDL_SCANCODE_RIGHT))
                 camera2_yaw += seconds_elapsed * rotation_speed;
             /*                
             if (Input::isKeyPressed(SDL_SCANCODE_I))
@@ -222,9 +222,9 @@ void World::update(double seconds_elapsed) {
         }
 
         // Player 1 camera controls with arrow keys
-        if (Input::isKeyPressed(SDL_SCANCODE_LEFT) || Input::isKeyPressed(SDL_SCANCODE_A))
+        if (Input::isKeyPressed(SDL_SCANCODE_A))
             camera_yaw -= seconds_elapsed * rotation_speed;
-        if (Input::isKeyPressed(SDL_SCANCODE_RIGHT) || Input::isKeyPressed(SDL_SCANCODE_D))
+        if (Input::isKeyPressed(SDL_SCANCODE_D))
             camera_yaw += seconds_elapsed * rotation_speed;
 
             /*

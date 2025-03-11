@@ -14,7 +14,24 @@ enum eAnimationState {
     CELEBRATE
 };
 
+#define MAX_SNOW_PARTICLES 400
+
+struct SnowParticle {
+    Vector3 position;
+    Vector3 velocity;
+    Vector3 initial_pos;  // Store initial spawn position
+    float lifetime;
+    float alpha;
+    float max_lifetime;   // Store initial lifetime for fade calculations
+};
+
 class Player : public EntityMesh {
+public:
+    // Made public so World can access particles
+    SnowParticle particles[MAX_SNOW_PARTICLES];
+    void updateSnowParticles(float dt);
+    void renderSnowParticles(Camera* camera);
+private:
     float walk_speed = 20.0f;
     Vector3 velocity = Vector3(0.0f);
     EntityMesh* sword = nullptr;
