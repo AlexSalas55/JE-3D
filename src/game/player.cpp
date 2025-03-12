@@ -210,18 +210,7 @@ void Player::update(float seconds_elapsed)
         // Skip rest of normal movement code
         return;
     }
-
-    // if (position.z >= 269.0f) { //trigger to reach the end of the map
-    //     std::cout << "Skier has reached the finish line! Position: " << position.z << std::endl;
-    //     //reset player
-    //     position = Vector3(0.0f, 200.0f, 0.0f);
-    //     model.setTranslation(position.x, position.y, position.z);
-    //     current_speed = 0.0f;
-    //     velocity = Vector3(0.0f);
-    //     vertical_velocity = 0.0f;
-
-    // }
-
+/*
     //if 1 is pressed spawn the player in a specific position
     if (Input::isKeyPressed(SDL_SCANCODE_1)) {
         //position = Vector3(6.0f, 200.0f, 64.0f);
@@ -230,7 +219,6 @@ void Player::update(float seconds_elapsed)
         current_speed = 0.0f;
         velocity = Vector3(0.0f);
         vertical_velocity = 0.0f;
-
     }
     //if 2 is pressed spawn the player in map2
     if (Input::isKeyPressed(SDL_SCANCODE_2)) {
@@ -242,9 +230,8 @@ void Player::update(float seconds_elapsed)
         current_speed = 0.0f;
         velocity = Vector3(0.0f);
         vertical_velocity = 0.0f;
-
     }
-
+*/    
     //debug position
     //std::cout << "Skier Position: " << position.x << ", " << position.y << ", " << position.z << std::endl;
     //Ground detection (handling collisions and ground check)
@@ -257,7 +244,6 @@ void Player::update(float seconds_elapsed)
     float best_up_factor = 0.0f;
 
     // Find ground normal and update grounded state
-    // Check all ground collisions to find the most suitable slope
     for (const sCollisionData& collision : ground_collisions) {
         float up_factor = collision.colNormal.dot(Vector3::UP);
         if (up_factor > slope_tolerance) {
@@ -279,7 +265,6 @@ void Player::update(float seconds_elapsed)
     if (is_grounded) {
         // Reset air time when landing
         air_time = 0.0f;
-
         float slope_angle = acos(ground_normal.dot(Vector3::UP));
         Vector3 slope_direction = (Vector3::UP - ground_normal * (Vector3::UP.dot(ground_normal))).normalize();
 
@@ -307,7 +292,6 @@ void Player::update(float seconds_elapsed)
     
             if (slope_factor > 0) { //Downhill acceleration
                 velocity += -slope_direction * gravity_force * slope_factor * seconds_elapsed;
-
                 //Calculate the slope angle in degrees
                 float slope_angle_deg = slope_factor * RAD2DEG;
                 //desired camera angle based on the slope
@@ -315,7 +299,6 @@ void Player::update(float seconds_elapsed)
                 target_camera_angle = clamp(target_camera_angle, 0.45f, 5.0f);
                 //Smooth interpolation
                 float camera_smooth_factor = 0.01f;
-
                // Add lateral tilt calculation
                 Vector3 right = model.rightVector();
                 Vector3 projected_right = (right - ground_normal * right.dot(ground_normal)).normalize();
@@ -341,13 +324,9 @@ void Player::update(float seconds_elapsed)
                     World::get_instance()->camera_pitch = camera_angle;
                 }
                 
-
             } else if (slope_factor < 0) { //Uphill Deceleration
                 current_acceleration -= uphill_deceleration * abs(slope_factor);
             }
-    
-            //acceleration to speed
-            //current_speed += current_acceleration * seconds_elapsed;
 
             if (current_speed < max_speed) {
                 current_speed += current_acceleration * seconds_elapsed;
@@ -381,20 +360,6 @@ void Player::update(float seconds_elapsed)
                 //velocity = velocity.normalize() * current_speed;            
             }
             else if (slope_factor < 0) {
-                //Apply uphill deceleration based on slope
-                //current_speed *= (1.0f - uphill_deceleration * seconds_elapsed);
-                //current_speed -= uphill_deceleration * slope_factor;
-
-                //current_speed = clamp(current_speed, current_speed, 0.0f); 
-				//current speed 0.0f
-				//current_speed = std::max(current_speed, 0.0f);
-                
-                //disabled now for testing
-                //current_speed += -uphill_deceleration * seconds_elapsed;
-				//velocity -= -slope_direction * gravity_force * slope_factor * seconds_elapsed * uphill_deceleration;
-
-                //decrease speed over time but direction on slope
-                
             } else { //Flat ground (Decelerate gradually)
                 if (current_speed > 0.1f) {
                     current_speed *= (1.0f - base_deceleration * seconds_elapsed);
@@ -454,11 +419,8 @@ void Player::update(float seconds_elapsed)
             if (velocity.length() > 0) {
                 velocity = velocity.normalize() * current_speed;
             }
-    
             //Update velocity based on slope-movement direction and speed
             velocity = slope_move * current_speed;
-            //velocity = velocity + slope_move * current_speed;
-            //velocity = (velocity - ground_normal * velocity.dot(ground_normal)).normalize() * current_speed + (-slope_direction * gravity_force * sin(slope_angle) * seconds_elapsed);
         }
         
         //Apply friction dynamically on ground to reduce speed over time
