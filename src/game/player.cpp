@@ -14,17 +14,16 @@ Player::Player(Mesh* mesh, const Material& material, const std::string& name)
 {
     this->name = name;
     walk_speed = 5.0f;
-    // Animations
+    //Animations
     isAnimated = true;
     
-    // Initialize animator with idle animation but don't play it yet
-    // This ensures the skeleton is properly initialized
+    //initialize animator
     Animation* idle = Animation::Get("data/meshes/animations/idle.skanim");
     if (idle) {
         animator.playAnimation("data/meshes/animations/idle.skanim", true);
     }
 
-    // Initialize falling snow particles
+    //init falling snow particles
     for (int i = 0; i < MAX_FALLING_SNOW; i++) {
         spawnFallingSnowParticle(i);
     }
@@ -33,17 +32,17 @@ Player::Player(Mesh* mesh, const Material& material, const std::string& name)
 void Player::spawnFallingSnowParticle(int index) {
     Vector3 player_pos = model.getTranslation();
     Vector3 front = model.frontVector().normalize();
-    float radius = 30.0f;  // Area around player for snow
+    float radius = 30.0f;  //area around player for snow
     
-    // Spawn snow in a more visible area
+    //spawn snow
     falling_snow[index].position = Vector3(
-        player_pos.x + (rand() % 1000 - 500) * 0.06f,  // Random X spread
-        player_pos.y + 15.0f + (rand() % 100) * 0.1f,  // Lower height, more visible
-        player_pos.z + front.z * 10.0f + (rand() % 1000 - 500) * 0.06f  // Bias towards front
+        player_pos.x + (rand() % 1000 - 500) * 0.06f, 
+        player_pos.y + 15.0f + (rand() % 100) * 0.1f, 
+        player_pos.z + front.z * 10.0f + (rand() % 1000 - 500) * 0.06f  //bias towards front
     );
     falling_snow[index].offset = (rand() % 1000) * 0.001f * 2 * M_PI;
-    falling_snow[index].speed = 6.0f + (rand() % 100) * 0.04f;  // Slightly slower for better visibility
-    falling_snow[index].alpha = 0.8f + (rand() % 20) * 0.01f;   // More visible
+    falling_snow[index].speed = 6.0f + (rand() % 100) * 0.04f;  //slower for better visibility
+    falling_snow[index].alpha = 0.8f + (rand() % 20) * 0.01f;
     falling_snow[index].active = true;
 }
 
@@ -51,21 +50,20 @@ void Player::updateFallingSnow(float dt, const Vector3& camera_pos) {
     Vector3 player_pos = model.getTranslation();
     Vector3 front = model.frontVector().normalize();
     float camera_speed = velocity.length();
-    
+    //spawn snow particles
     for (int i = 0; i < MAX_FALLING_SNOW; i++) {
         if (!falling_snow[i].active) {
             spawnFallingSnowParticle(i);
             continue;
         }
-
-        // Update position with cosine movement
+        //update position
         falling_snow[i].position.y -= falling_snow[i].speed * dt;
-        falling_snow[i].position.x += cos(falling_snow[i].offset + Game::instance->time * 2.0f) * dt * 0.5f; // Gentle sway
-        falling_snow[i].position.z += sin(falling_snow[i].offset + Game::instance->time * 1.5f) * dt * 0.3f; // Add some Z sway
+        falling_snow[i].position.x += cos(falling_snow[i].offset + Game::instance->time * 2.0f) * dt * 0.5f; //gentle movement
+        falling_snow[i].position.z += sin(falling_snow[i].offset + Game::instance->time * 1.5f) * dt * 0.3f; 
 
-        // Respawn if too far from player or too low
-        if (falling_snow[i].position.y < player_pos.y - 5.0f ||  // Reduced fall distance
-            (falling_snow[i].position - player_pos).length() > 40.0f) {  // Reduced respawn distance
+        //respawn if too far from player or too low
+        if (falling_snow[i].position.y < player_pos.y - 5.0f || 
+            (falling_snow[i].position - player_pos).length() > 40.0f) { 
             spawnFallingSnowParticle(i);
         }
     }
@@ -76,7 +74,7 @@ void Player::renderFallingSnow(Camera* camera) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(GL_FALSE);
     
-    glPointSize(2.5f);  // Slightly smaller points for better visual
+    glPointSize(2.5f);
     glBegin(GL_POINTS);
     for (int i = 0; i < MAX_FALLING_SNOW; i++) {
         if (falling_snow[i].active) {
@@ -94,13 +92,13 @@ void Player::renderFallingSnow(Camera* camera) {
 
 void Player::render(Camera* camera)
 {
-    // First render the animated player mesh
+    //render the animated player mesh
     EntityMesh::render(camera);
 
-    // Render falling snow
+    //render falling snow
     renderFallingSnow(camera);
 
-    // Debug visualization
+    //debug visualization
     Shader* debug_shader = Shader::Get("data/shaders/basic.vs", "data/shaders/flat.fs");
     Mesh* sphere_mesh = Mesh::Get("data/meshes/sphere.obj");
     Matrix44 m = getGlobalMatrix();
@@ -108,15 +106,12 @@ void Player::render(Camera* camera)
     if (debug_shader && sphere_mesh)
     {
         debug_shader->enable();
-
         {
             m.translate(0.0f, World::get_instance()->player_height, 0.0f);
             m.scale(World::get_instance()->sphere_radius, World::get_instance()->sphere_radius, World::get_instance()->sphere_radius);
-
             debug_shader->setUniform("u_color", Vector4(0.0f, 1.0f, 0.0f, 1.0f));
             debug_shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
             debug_shader->setUniform("u_model", m);
-
             sphere_mesh->render(GL_LINES);
         }
         {
@@ -128,7 +123,6 @@ void Player::render(Camera* camera)
             debug_shader->setUniform("u_model", m);
             sphere_mesh->render(GL_LINES);
         }
-
         debug_shader->disable();
     }
 }
@@ -143,58 +137,57 @@ void Player::update(float seconds_elapsed)
     Vector3 right = mYaw.rightVector().normalize();
     Vector3 position = model.getTranslation();
 
-    // Gestionar el sonido del viento según la velocidad
+    //manage wind sound based on speed
     float speed = velocity.length();
     if (speed > 0.1f) {
-        // Calcular el volumen basado en la velocidad (entre 0 y 0.4)
+        //volume based on speed
         float volume = clamp(speed / top_speed * 0.4f, 0.0f, 0.8f);
         
-        // Iniciar el sonido si no está sonando
+        //start sound if not playing
         if (!is_wind_sound_playing) {
             wind_sound_channel = Audio::Play("data/assets/audio/sound_wind.wav", volume, BASS_SAMPLE_LOOP);
             is_wind_sound_playing = true;
         } else {
-            // Ajustar el volumen si ya está sonando
+            //adjust volume if is playing
             BASS_ChannelSetAttribute(wind_sound_channel, BASS_ATTRIB_VOL, volume);
         }
     } else if (is_wind_sound_playing) {
-        // Detener el sonido si la velocidad es muy baja
+        //stop sound if speed is too low
         Audio::Stop(wind_sound_channel);
         is_wind_sound_playing = false;
     }
 
-    // Portal fall check
-    float x_tolerance = 25.0f;  // Smaller tolerance for X
-    float y_tolerance = 32.0f;  // Smaller tolerance for Y
-    float z_tolerance = 35.0f; // Larger tolerance for Z
+    //Portal fall check (first checkpoint)
+    float x_tolerance = 25.0f; 
+    float y_tolerance = 32.0f;  
+    float z_tolerance = 35.0f; 
 
     if (!in_portal_fall && 
         abs(position.x - 366.614f) < x_tolerance && 
         abs(position.y - (-637.898f)) < y_tolerance &&
         abs(position.z - portal_target.z) < z_tolerance) {
         
-        // Enter portal fall mode
+        //enter portal fall mode
         in_portal_fall = true;
         current_speed = 0.0f;
         velocity = Vector3(0.0f);
         vertical_velocity = 0.0f;
         is_grounded = false;
         
-        // Lock X position during fall
+        //lock X position during fall
         position.x = 360.614f;
         model.setTranslation(position.x, position.y, position.z);
     }
 
-    // Handle portal falling
+    //handle portal falling
     if (in_portal_fall) {
-        // Only apply gravity
+        //only apply gravity
         velocity.y -= gravity * air_gravity_multiplier * seconds_elapsed;
         velocity.y = std::max(velocity.y, terminal_velocity);
-        
-        // Move towards target Z position
+        //move target Z position
         float z_diff = portal_target.z - position.z;
         velocity.z = (z_diff >= 0.0f ? 1.0f : -1.0f) * std::min(abs(z_diff), 30.0f); // Smooth Z transition
-        // Check if we've reached target height
+        //check if target reached
         if (position.y <= portal_target.y) {
             in_portal_fall = false;
             position.y = portal_target.y;
@@ -203,38 +196,31 @@ void Player::update(float seconds_elapsed)
             is_grounded = true;
         }
         
-        // Update position
+        //update pos
         position = position + velocity * seconds_elapsed;
         model.setTranslation(position.x, position.y, position.z);
         
-        // Skip rest of normal movement code
         return;
     }
-/*
-    //if 1 is pressed spawn the player in a specific position
+    //if 1 pressed player spawn in first pos
     if (Input::isKeyPressed(SDL_SCANCODE_1)) {
-        //position = Vector3(6.0f, 200.0f, 64.0f);
         position = Vector3(345.0f, 184.0f, 37.0f);
         model.setTranslation(position.x, position.y, position.z);
         current_speed = 0.0f;
         velocity = Vector3(0.0f);
         vertical_velocity = 0.0f;
     }
-    //if 2 is pressed spawn the player in map2
+    //if 2 pressed player spawn in second pos
     if (Input::isKeyPressed(SDL_SCANCODE_2)) {
-        //position = Vector3(250.0f, 200.0f, -25.0f);
-        //position = Vector3(340.614, -647.0f, 245.0f);
         position = Vector3(367.0f, -762.0f, 228.0f);
-
         model.setTranslation(position.x, position.y, position.z);
         current_speed = 0.0f;
         velocity = Vector3(0.0f);
         vertical_velocity = 0.0f;
     }
-*/    
     //debug position
     //std::cout << "Skier Position: " << position.x << ", " << position.y << ", " << position.z << std::endl;
-    //Ground detection (handling collisions and ground check)
+    //ground detection (handling collisions and ground check)
     std::vector<sCollisionData> collisions;
     std::vector<sCollisionData> ground_collisions;
     World::get_instance()->test_scene_collisions(position, collisions, ground_collisions, eCollisionFilter::ALL);
@@ -243,12 +229,12 @@ void Player::update(float seconds_elapsed)
     Vector3 best_ground_normal = Vector3::UP;
     float best_up_factor = 0.0f;
 
-    // Find ground normal and update grounded state
+    //find ground normal and update grounded state
     for (const sCollisionData& collision : ground_collisions) {
         float up_factor = collision.colNormal.dot(Vector3::UP);
         if (up_factor > slope_tolerance) {
             is_grounded = true;
-            // Update if this is a better slope (more vertical)
+            //update if is a better slope
             if (up_factor > best_up_factor) {
                 best_up_factor = up_factor;
                 best_ground_normal = collision.colNormal;
@@ -257,19 +243,19 @@ void Player::update(float seconds_elapsed)
         }
     }
 
-    // Update ground normal if we found a valid ground collision
+    //update ground normal if valid ground collision
     if (is_grounded) {
         ground_normal = best_ground_normal;
     }
 
     if (is_grounded) {
-        // Reset air time when landing
+        //reset air time when landing
         air_time = 0.0f;
         float slope_angle = acos(ground_normal.dot(Vector3::UP));
         Vector3 slope_direction = (Vector3::UP - ground_normal * (Vector3::UP.dot(ground_normal))).normalize();
 
         Vector3 move_direction(0.0f);
-        // Different movement controls for each player
+        //movement controls for each player
         if (this == World::get_instance()->player2) {
             if (Input::isKeyPressed(SDL_SCANCODE_UP)) move_direction.z = 1.0f;
         } else {
@@ -277,7 +263,6 @@ void Player::update(float seconds_elapsed)
         }
 
         if (move_direction.length() > 0.01f) {
-            //move based on user input
             move_direction.normalize();
             Vector3 world_direction;
             world_direction.x = move_direction.x * right.x + move_direction.z * front.x;
@@ -292,30 +277,30 @@ void Player::update(float seconds_elapsed)
     
             if (slope_factor > 0) { //Downhill acceleration
                 velocity += -slope_direction * gravity_force * slope_factor * seconds_elapsed;
-                //Calculate the slope angle in degrees
+                //slope angle in degrees
                 float slope_angle_deg = slope_factor * RAD2DEG;
-                //desired camera angle based on the slope
+                //desired camera angle based on slope
                 float target_camera_angle = slope_angle_deg * 0.01f;
                 target_camera_angle = clamp(target_camera_angle, 0.45f, 5.0f);
-                //Smooth interpolation
+                //smooth interpolation
                 float camera_smooth_factor = 0.01f;
-               // Add lateral tilt calculation
+                //lateral tilt calculation
                 Vector3 right = model.rightVector();
                 Vector3 projected_right = (right - ground_normal * right.dot(ground_normal)).normalize();
                 float lateral_slope = right.dot(ground_normal); // How much the ground slopes sideways
                 
-                // Calculate camera roll based on lateral slope
-                float target_roll = lateral_slope * 25.0f; // Convert to degrees and amplify
-                target_roll = clamp(target_roll, -15.0f, 15.0f); // Limit maximum roll
+                //camera roll based on lateral slope
+                float target_roll = lateral_slope * 25.0f; //convert to degrees and amplify
+                target_roll = clamp(target_roll, -15.0f, 15.0f); //limit maximum roll
 
-                // Smooth interpolation for roll
+                //smooth interpolation for roll
                 if (this == World::get_instance()->player2) {
                     World::get_instance()->camera2_roll = lerp(World::get_instance()->camera2_roll, target_roll, camera_smooth_factor);
                 } else {
                     World::get_instance()->camera_roll = lerp(World::get_instance()->camera_roll, target_roll, camera_smooth_factor);
                 }
 
-                // Existing pitch interpolation
+                //pitch interpolation
                 if (this == World::get_instance()->player2) {
                     float camera_angle = lerp(World::get_instance()->camera2_pitch, target_camera_angle, camera_smooth_factor);
                     World::get_instance()->camera2_pitch = camera_angle;
@@ -324,90 +309,76 @@ void Player::update(float seconds_elapsed)
                     World::get_instance()->camera_pitch = camera_angle;
                 }
                 
-            } else if (slope_factor < 0) { //Uphill Deceleration
+            } else if (slope_factor < 0) { //uphill deceleration
                 current_acceleration -= uphill_deceleration * abs(slope_factor);
             }
 
             if (current_speed < max_speed) {
                 current_speed += current_acceleration * seconds_elapsed;
             }
-
-            //current_speed = clamp(current_speed, 0.0f, max_speed);
             //update velocity
             velocity = slope_move * current_speed;
-
         }
         else {
-            //When no input let gravity and friction will affect speed
+            //when no input gravity and friction affect speed
             Vector3 camera_direction = front;
-            camera_direction.y = 0.0f; //Ignore the vertical component
-    
-            //Project camera forward dir onto the ground
+            camera_direction.y = 0.0f; //ignore vertical
+            //project camera forward dir onto ground
             Vector3 slope_move = (camera_direction - ground_normal * camera_direction.dot(ground_normal)).normalize();
-    
-            //Calculate slope factor
+            //slope factor
             float slope_factor = sin(slope_angle);
-
-    
             //apply gravity(only downhill)
             if (slope_factor > 0.01f) { 
-                //velocity += -slope_direction * gravity_force * slope_factor * seconds_elapsed;
                 velocity += -slope_direction * (gravity_force * slope_factor * seconds_elapsed);
-                //increase velocity over time
+                //incr elocity over time
                 current_speed += acceleration * seconds_elapsed;
-                //current_speed = clamp(current_speed, 0.0f, max_speed); 
-                
-                //velocity = velocity.normalize() * current_speed;            
             }
             else if (slope_factor < 0) {
-            } else { //Flat ground (Decelerate gradually)
+            } else { //flat ground (decelerate gradually)
                 if (current_speed > 0.1f) {
                     current_speed *= (1.0f - base_deceleration * seconds_elapsed);
                     
-                    // Get the current movement direction
+                    //current movement direction
                     Vector3 current_dir = velocity.normalize();
                     
-                    // Only update velocity if we have a valid direction
+                    //only update velocity if valid direction
                     if (current_dir.length() > 0.01f) {
                         velocity = current_dir * current_speed;
                     } else {
-                        // If no clear direction, just stop
+                        //if no clear direction, just stop
                         current_speed = 0.0f;
                         velocity = Vector3(0.0f);
                     }
                 } else {
-                    // Below threshold, just stop
+                    //if <threshold,stop
                     current_speed = 0.0f;
                     velocity = Vector3(0.0f);
                 }
-
-                // Calculate camera angle based on player-specific slope and facing direction
+                //camera angle based on player-specific slope and facing direction
                 Vector3 player_forward = model.frontVector().normalize();
                 Vector3 slope_dir = calculateSlopeDirection();
                 float facing_factor = player_forward.dot(-slope_dir);
                 float slope_angle_deg = slope_factor * RAD2DEG;
                 
                 float target_camera_angle;
-                if (facing_factor < 0) { // Facing uphill
+                if (facing_factor < 0) { //facing uphill
                     target_camera_angle = -slope_angle_deg * 0.03f;
                     target_camera_angle = clamp(target_camera_angle, -5.0f, -0.01f);
-                } else { // Facing downhill
+                } else { //facing downhill
                     target_camera_angle = slope_angle_deg * 0.03f;
                     target_camera_angle = clamp(target_camera_angle, 0.01f, 5.0f);
                 }
-                
                 updateCameraPitch(target_camera_angle);
-
             }
 
-            //Calculate the slope angle in degrees
+            //slope angle in degrees
             float slope_angle_deg = slope_factor * RAD2DEG;
-            //desired camera angle based on the slope
+            //desired camera angle based on slope
             float target_camera_angle = slope_angle_deg * 0.02f;
             target_camera_angle = clamp(target_camera_angle, 0.45f, 5.0f);
-            //Smooth interpolation
+            //smooth interpolation
             float camera_smooth_factor = 0.01f;
-            //Interpolation between  camera pitch and target camera angle
+            //interpolation between camera pitch and target camera angle
             if (this == World::get_instance()->player2) {
             float camera_angle = lerp(World::get_instance()->camera2_pitch, target_camera_angle, camera_smooth_factor);
             World::get_instance()->camera2_pitch = camera_angle;
@@ -415,62 +386,60 @@ void Player::update(float seconds_elapsed)
                 float camera_angle = lerp(World::get_instance()->camera_pitch, target_camera_angle, camera_smooth_factor);
                 World::get_instance()->camera_pitch = camera_angle;
             }
-            //Normalize velocity to current speed
+            //normalize velocity to current speed
             if (velocity.length() > 0) {
                 velocity = velocity.normalize() * current_speed;
             }
-            //Update velocity based on slope-movement direction and speed
+            //update velocity based on slope-movement direction and speed
             velocity = slope_move * current_speed;
         }
         
-        //Apply friction dynamically on ground to reduce speed over time
+        //dynamic friction on ground to reduce speed over time
         float effective_friction = ground_friction;
         float slope_factor = sin(slope_angle);
 
         if (slope_factor > 0) {
-            effective_friction *= (1.0f - slope_factor * 0.5f); //downhill less Friction
+            effective_friction *= (1.0f - slope_factor * 0.5f); //downhill less friction
 
         } else if (slope_factor < 0) {
             //a lot more when uphill
-            effective_friction *= (1.0f + abs(slope_factor) * 0.5f); //uphill more friction
+            effective_friction *= (1.0f + abs(slope_factor) * 0.5f);
         }
         //effective friction based on the slope
         current_speed *= (1.0f - effective_friction * seconds_elapsed);
     }
-    
 
     //air physics
     if (!is_grounded) {
-        // Update air time
+        //update air time
         air_time += seconds_elapsed;
         
-        // Check if in air for more than 1 second
+        //if in air for more than
         if (air_time > 0.9f) {
-            //std::cout << "Player has been in the air for more than 1 second!" << std::endl;
-            // Get player-specific slope and facing information for air time camera
+            //air camera for player
             Vector3 player_forward = model.frontVector().normalize();
             Vector3 slope_dir = calculateSlopeDirection();
             float facing_factor = player_forward.dot(-slope_dir);
             float slope_factor = calculateSlopeFactor();
             float slope_angle_deg = slope_factor * RAD2DEG;
             
-            // Adjust camera angle based on player's facing direction in air
+            //camera angle based on player facing direction in air
             float target_camera_angle;
-            if (facing_factor < 0) { // Facing uphill in air
+            if (facing_factor < 0) { //facing uphill in air
                 target_camera_angle = -slope_angle_deg * 4.0f;
                 target_camera_angle = clamp(target_camera_angle, 1.0, 5.0f);
-            } else { // Facing downhill in air
+            } else { //facing downhill in air
                 target_camera_angle = slope_angle_deg * 4.0f;
                 target_camera_angle = clamp(target_camera_angle, 1.0f, 5.0f);
             }
             updateCameraPitch(target_camera_angle);
         } 
 
-        //gravity in the correct direction
+        //gravity in correct dir
         Vector3 gravity_direction = Vector3::UP - ground_normal * (ground_normal.dot(Vector3::UP));
         gravity_direction.normalize();
         
-        //Increase gravity to make the fall faster
+        //gravity increased to make fall faster
         velocity.y -= gravity * air_gravity_multiplier * seconds_elapsed;
         velocity += gravity_direction * gravity_force * seconds_elapsed;
 
@@ -479,63 +448,54 @@ void Player::update(float seconds_elapsed)
 
         //terminal velocity to prevent floating
         velocity.y = std::max(velocity.y, terminal_velocity);
-
-
-
     }
-    //Update position and check collisions
+    //update pos and check collisions
     Vector3 desired_position = position + velocity * seconds_elapsed;
     testCollisions(desired_position, seconds_elapsed);
     model.rotate(camera_yaw, Vector3(0, 1, 0));
 
-
-    //snapping the player Y pos to ground (if on ground)
+    //snapping player pos to ground (if on ground)
     if (is_grounded) {
         air_time = 0.0f;
         position.y = ground_normal.y;
     }
-    
-    
-    // Calculate player-specific forward vector
+
+    //player forward vector
     Vector3 forward = model.frontVector();
     Vector3 new_forward = (forward - ground_normal * forward.dot(ground_normal)).normalize();
     model.setFrontAndOrthonormalize(new_forward);
     
-    
-    // Each player calculates their own slope direction and facing angle
+    //each player calculates their own slope direction and facing angle
     Vector3 slope_direction = calculateSlopeDirection();
     Vector3 player_forward = model.frontVector().normalize();
-    float facing_slope_dot = player_forward.dot(-slope_direction); // Negative means uphill
+    float facing_slope_dot = player_forward.dot(-slope_direction); //negative slope means uphill
     float slope_factor = calculateSlopeFactor();
     
-    // Handle uphill movement
+    //handle uphill movement
     if (facing_slope_dot < 0) {
         uphill_timer += seconds_elapsed;
-        // Update camera pitch for uphill movement
+        //camera pitch for uphill movement
         float slope_angle_deg = slope_factor * RAD2DEG;
         float target_angle = -slope_angle_deg * 0.045f;
         target_angle = clamp(target_angle, -15.0f, 0.0f);
         updateCameraPitch(target_angle);
 
-        // Handle uphill physics and deceleration
+        //uphill physics and deceleration
         handleUphillMovement(seconds_elapsed, slope_factor);
     } else {
-        uphill_timer = 0.0f; // Reset timer when not facing uphill
+        uphill_timer = 0.0f; //reset timer if not facing uphill
     }
 
     /////////////////////////////////// ANIMATION STATE SYSTEM ///////////////////////////////////
-    // TODO: collisions animations
-    // if (animation_state != eAnimationState::JUMP) {
-        // if key W was pressed, play the impulse animation
     if (is_grounded) {
         if (velocity.length() > 0.0f) {
-            // Reproducir sonido de movimiento si no está sonando ya
+            //play move sound if not already playing
             if (!is_move_sound_playing) {
                 move_sound_channel = Audio::Play("data/assets/audio/sound_move.wav", 0.2f);
                 is_move_sound_playing = true;
             }
             
-            // Check if this is player2 and handle its controls
+            //check if this is player2 and handle its controls
             if (this == World::get_instance()->player2) {
                 if (Input::isKeyPressed(SDL_SCANCODE_UP)) {
                     if (animation_state != eAnimationState::IMPULSE) {
@@ -548,19 +508,19 @@ void Player::update(float seconds_elapsed)
                         animation_state = eAnimationState::BRAKE;
                     }
                     
-                    // Detener sonido de movimiento si está sonando
+                    //stop move sound if playing
                     if (is_move_sound_playing) {
                         Audio::Stop(move_sound_channel);
                         is_move_sound_playing = false;
                     }
                     
-                    // Reproducir sonido de frenado si no está sonando ya
+                    //play brake sound if not already playing
                     if (!is_brake_sound_playing) {
                         brake_sound_channel = Audio::Play("data/assets/audio/sound_brake.wav", 0.7f);
                         is_brake_sound_playing = true;
                     }
                     
-                    // Add braking physics
+                    //braking physics
                     float brake_force = 3.0f * base_deceleration;
                     current_speed *= (1.0f - brake_force * seconds_elapsed);
                     if (current_speed < 0.1f)
@@ -574,13 +534,13 @@ void Player::update(float seconds_elapsed)
                         animation_state = eAnimationState::MOVE;
                     }
                     
-                    // Detener el sonido de frenado si está sonando
+                    //stop brake sound if playing
                     if (is_brake_sound_playing) {
                         Audio::Stop(brake_sound_channel);
                         is_brake_sound_playing = false;
                     }
                 }
-            } else { // Player 1 controls
+            } else { //player 1 controls
                 if (Input::isKeyPressed(SDL_SCANCODE_W)) {
                     if (animation_state != eAnimationState::IMPULSE) {
                         animator.playAnimation("data/meshes/animations/impulse.skanim");
@@ -592,26 +552,25 @@ void Player::update(float seconds_elapsed)
                         animation_state = eAnimationState::BRAKE;
                     }
                     
-                    // Detener sonido de movimiento si está sonando
+                    //stop move sound if playing
                     if (is_move_sound_playing) {
                         Audio::Stop(move_sound_channel);
                         is_move_sound_playing = false;
                     }
                     
-                    // Reproducir sonido de frenado si no está sonando ya
+                    //play brake sound if not already playing
                     if (!is_brake_sound_playing) {
                         brake_sound_channel = Audio::Play("data/assets/audio/sound_brake.wav", 0.7f);
                         is_brake_sound_playing = true;
                     }
                     
-                    // Add braking physics
-                    float brake_force = 3.0f * base_deceleration; // Stronger than base deceleration
-                    // Apply stronger deceleration when braking
+                    //braking physics
+                    float brake_force = 3.0f * base_deceleration; //stronger than base deceleration
                     current_speed *= (1.0f - brake_force * seconds_elapsed);
-                    // Ensure we don't get negative speed from braking
+                    //no negative speed from braking
                     if (current_speed < 0.1f)
                         current_speed = 0.0f;
-                    // Update velocity to match new speed
+                    //update velocity to match new speed
                     if (velocity.length() > 0) {
                         velocity = velocity.normalize() * current_speed;
                     }
@@ -621,7 +580,7 @@ void Player::update(float seconds_elapsed)
                         animation_state = eAnimationState::MOVE;
                     }
                     
-                    // Detener el sonido de frenado si está sonando
+                    //stop brake sound if playing
                     if (is_brake_sound_playing) {
                         Audio::Stop(brake_sound_channel);
                         is_brake_sound_playing = false;
@@ -629,19 +588,19 @@ void Player::update(float seconds_elapsed)
                 }
             }
         } else if (velocity.length() == 0.0f) {
-            // Detener sonido de movimiento si está sonando
+            //stop move sound if playing
             if (is_move_sound_playing) {
                 Audio::Stop(move_sound_channel);
                 is_move_sound_playing = false;
             }
             
-            // Detener el sonido de frenado si está sonando
+            //stop brake sound if playing
             if (is_brake_sound_playing) {
                 Audio::Stop(brake_sound_channel);
                 is_brake_sound_playing = false;
             }
             
-            // Celebrate animation with different keys for each player
+            //celebrate animation with different keys for each player
             if (this == World::get_instance()->player2) {
                 if (Input::isKeyPressed(SDL_SCANCODE_M)) {
                     if (animation_state != eAnimationState::CELEBRATE) {
@@ -668,45 +627,26 @@ void Player::update(float seconds_elapsed)
                 }
             }
         }
-    } else if (air_time > 0.45f) {
-        // Detener todos los sonidos cuando el jugador no está en contacto con el suelo
-        // (excepto el sonido del viento)
-        if (is_move_sound_playing) {
-            Audio::Stop(move_sound_channel);
-            is_move_sound_playing = false;
-        }
-        
-        if (is_brake_sound_playing) {
-            Audio::Stop(brake_sound_channel);
-            is_brake_sound_playing = false;
-        }
-        
+    } else if (air_time > 0.45f) {        
         if (animation_state != eAnimationState::JUMP) {
             animator.playAnimation("data/meshes/animations/fall.skanim");
             animation_state = eAnimationState::JUMP;
         }
-    }
-    /////////////////////////////////// ANIMATION STATE SYSTEM ///////////////////////////////////
-
-    //if player in the air make the player rotate
-    if (!is_grounded) {
-        // Detener todos los sonidos cuando el jugador no está en contacto con el suelo
-        // (excepto el sonido del viento)
+    }else if (air_time > 0.25f) {
+        //stop all sounds when player not on ground
+        //(except wind sound)
         if (is_move_sound_playing) {
             Audio::Stop(move_sound_channel);
             is_move_sound_playing = false;
         }
-        
         if (is_brake_sound_playing) {
             Audio::Stop(brake_sound_channel);
             is_brake_sound_playing = false;
         }
-        
         if (Input::isKeyPressed(SDL_SCANCODE_SPACE)) {
             model.rotate(velocity.length() * 0.2f, Vector3(0, 1, 0));
         }
     }
-
 
     //animations
     animator.update(seconds_elapsed);
@@ -718,7 +658,7 @@ void Player::update(float seconds_elapsed)
 
 
 
-// Helper methods implementation
+//helper methods
 Vector3 Player::calculateSlopeDirection() const {
     return (Vector3::UP - ground_normal * (Vector3::UP.dot(ground_normal))).normalize();
 }
@@ -732,19 +672,19 @@ void Player::updateCameraPitch(float target_angle) {
     bool is_player2 = (this == World::get_instance()->player2);
     float& current_pitch = is_player2 ? World::get_instance()->camera2_pitch : World::get_instance()->camera_pitch;
     
-    // Use player's own model forward to determine if they're facing up/down the slope
+    //use player model forward to determine if facing up or down slope
     Vector3 player_forward = model.frontVector().normalize();
     Vector3 slope_dir = calculateSlopeDirection();
     float facing_factor = player_forward.dot(-slope_dir);
     
-    // Adjust target angle based on player's specific facing direction
-    if (facing_factor < 0) { // Facing uphill
+    //adjust target angle based on player specific facing direction
+    if (facing_factor < 0) { //facing uphill
         target_angle = clamp(target_angle, -15.0f, 0.0f);
-    } else { // Facing downhill
+    } else { //facing downhill
         target_angle = clamp(target_angle, 0.0f, 15.0f);
     }
     
-    // Smooth camera transition using player-specific values
+    //smooth camera transition using player specific values
     float camera_angle = lerp(current_pitch, target_angle, camera_smooth_factor);
     current_pitch = camera_angle;
 }
@@ -753,27 +693,18 @@ void Player::handleUphillMovement(float seconds_elapsed, float slope_factor) {
     bool is_player2 = (this == World::get_instance()->player2);
     bool is_moving_forward = is_player2 ? Input::isKeyPressed(SDL_SCANCODE_UP) : Input::isKeyPressed(SDL_SCANCODE_W);
     
-    // Get player-specific forward direction and slope
+    //get player forward dir and slope
     Vector3 player_forward = model.frontVector().normalize();
     Vector3 slope_dir = calculateSlopeDirection();
     float facing_factor = player_forward.dot(-slope_dir);
     
     if (uphill_timer > 0.3f && !is_moving_forward) {
-        // Apply deceleration when facing uphill
-        if (facing_factor < 0) { // Only apply when actually facing uphill
+        //apply deceleration when facing uphill
+        if (facing_factor < 0) { //only apply when actually facing uphill
             current_speed *= (1.0f - uphill_deceleration * abs(slope_factor) * seconds_elapsed);
             
             if (current_speed < 5.0f) {
                 current_speed -= uphill_deceleration * 3.0f * seconds_elapsed;
-            }
-            
-            if (current_speed > 10.0f) {
-                /*
-                float slope_angle_deg = slope_factor * RAD2DEG;
-                float steep_target_angle = -slope_angle_deg * 5.9f;
-                steep_target_angle = clamp(steep_target_angle, -15.0f, 0.0f); // Adjusted clamp values
-                updateCameraPitch(steep_target_angle);
-                */
             }
         }
     }
@@ -790,25 +721,25 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
     is_grounded = false;
     Vector3 new_ground_normal = Vector3::UP;
 
-    //Ground collisions
-    float best_up_factor = 0.3f; // Minimum threshold for valid slopes
+    //ground collisions
+    float best_up_factor = 0.3f; //minimum threshold for valid slopes
     for (const sCollisionData& collision : ground_collisions) {
         float up_factor = collision.colNormal.dot(Vector3::UP);
-        if (up_factor > best_up_factor) {  //Allow landing on sloped surfaces
+        if (up_factor > best_up_factor) {  //allow landing on sloped surfaces
             is_grounded = true;
             ground_height = collision.colPoint.y;
-            new_ground_normal = collision.colNormal; //Store normal of the ground
-            best_up_factor = up_factor; // Update best factor
+            new_ground_normal = collision.colNormal; //store normal of the ground
+            best_up_factor = up_factor; //update best factor
         }
     }
 
-    //If grounded, update the ground_normal for this specific player
+    //if grounded, update the ground_normal for this specific player
     if (is_grounded) {
         this->ground_normal = new_ground_normal;
     } else {
-        this->ground_normal = Vector3::UP; // Reset to default when in air
+        this->ground_normal = Vector3::UP; //reset to default when in air
     }
-    //Collision with objects
+    //collision with objects
     for (const sCollisionData& collision : collisions) {
         EntityCollider* collider = dynamic_cast<EntityCollider*>(collision.colEntity);
         
@@ -818,14 +749,12 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
             //std::cout << "Player is colliding with: " << collider->name << std::endl;
         }
 
-        
-        //Skip collisions that are flat (ramps,etc
+        //Skip collisions that are flat (ramps, and so
         if (up_factor > 0.6f) {
             continue;
         }
 
-
-        if (up_factor < 0.3f) { // True walls
+        if (up_factor < 0.3f) { //True walls
             Vector3 wall_normal = collision.colNormal;
             Vector3 velocity_direction = velocity.normalize();
             
@@ -837,29 +766,29 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
                 && collider->name != "scene/TreeJump001__sn_woodRoad01/TreeJump001__sn_woodRoad01.obj"
                 && collider->name != "scene/CGra_Flame__PanelFlame1/CGra_Flame__PanelFlame1.obj") {
                 
-                // Update collision tracking
+                //update collision tracking
                 double current_time = Game::instance->time;
                 if (current_time - last_collision_time > 2.0) {
-                    // Reset counter if more than 2 seconds have passed
+                    //reset counter if more than 2 sec
                     collision_count = 0;
                 }
                 collision_count++;
                 last_collision_time = current_time;
 
-                // Check if we need to recover position
-                if (collision_count >= 6000 && current_time - last_collision_time <= 3.0) {
-                    // Reset collision tracking
+                //check if we need to recover position
+                if (collision_count >= 500 && current_time - last_collision_time <= 3.0) {
+                    //reset collision tracking
                     collision_count = 0;
                     last_collision_time = 0.0;
                     
-                    // Reset physics state
+                    //reset physics state
                     velocity = Vector3(0.0f);
                     current_speed = 0.0f;
                     vertical_velocity = 0.0f;
                     
-                    // Recover position
+                    //recover position
                     model.setTranslation(recovery_position.x, recovery_position.y, recovery_position.z);
-                    return; // Skip rest of collision handling
+                    return;
                 }
 
                 float impact_speed = velocity.length();
@@ -878,37 +807,9 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
                 model.setTranslation(safe_position.x, safe_position.y, safe_position.z);
             }
 
-            if (velocity_direction.dot(wall_normal) < -0.5f) {
-                // Only reduce speed for actual wall collisions
-                //current_speed *= 0.5f;  // Move it here so it only affects wall hits
-                //Vector3 slide_direction = velocity_direction - wall_normal * (velocity_direction.dot(wall_normal));
-                //velocity = slide_direction * current_speed;
-            } else {
-                //velocity *= 0.1f;
-                //current_speed *= 0.9f;
-            }
         }
-        /*
-        //collisions with non-ground objects
-        if (up_factor < 0.3f) { //steep objects or walls
-            //Calculate sliding along the side wall
-            Vector3 wall_normal = collision.colNormal;
-
-            //current_speed *= 0.5f;
-            //Check if skier is moving sideways into the wall
-            Vector3 velocity_direction = velocity.normalize();
-            if (velocity_direction.dot(wall_normal) < -0.5f) { //If skier is moving into the wall
-                //Apply sliding along the wall
-                Vector3 slide_direction = velocity_direction - wall_normal * (velocity_direction.dot(wall_normal));
-                velocity = slide_direction * current_speed;
-            } else {
-                //Reduce speed drastically when colliding with an object
-                velocity *= 0.1f;
-            }
-        }
-            */
     }
-    //Apply gravity & movement logic
+    //apply gravity & movement logic
     if (!is_grounded) {
         Vector3 horizontal_velocity = Vector3(velocity.x, 0, velocity.z);
         vertical_velocity -= gravity_force * 2.8f * seconds_elapsed;
@@ -916,34 +817,34 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
         velocity = horizontal_velocity + Vector3(0, vertical_velocity, 0);
     } else {
         if (!was_grounded) {
-            vertical_velocity *= 0.1f; //Small bounce when landing
+            vertical_velocity *= 0.1f; //small bounce when landing
         } else {
-            vertical_velocity = 0.0f; //Reset vertical velocity when grounded
+            vertical_velocity = 0.0f; //reset vertical velocity when grounded
         }
 
-        //Apply slope physics (for ramps)
+        //apply slope physics (for ramps)
         Vector3 gravity(0, -gravity_force, 0);
         Vector3 acceleration = gravity - (ground_normal * gravity.dot(ground_normal));
 
         float slope_dot = ground_normal.dot(Vector3::UP);
 
         
-        //Allow climbing easy slopes or ramps
+        //allow climbing easy slopes or ramps
         if (slope_dot < 0.9f && current_speed > 5.0f) {
-            if (slope_dot < 0.0f) {  //Handle uphill slopes
+            if (slope_dot < 0.0f) {  //handle uphill slopes
                 Vector3 launch_dir = velocity.normalize();
-                launch_dir.y = 1.0f - slope_dot;  //Adjust for steepness
+                launch_dir.y = 1.0f - slope_dot;  //adjust for steepness
                 velocity = launch_dir * current_speed;
-                is_grounded = false;  //Set as not grounded when moving up ramps
+                is_grounded = false;  //set as not grounded when moving up ramps
             }
         } else {
-            //Normal grounded movement, reset vertical velocity to 0 when grounded
+            //reset vertical velocity to 0 when grounded
             vertical_velocity = 0.0f;
         }
             
     }
 
-    //Update position
+    //update position
     Vector3 updated_position = target_position + velocity * seconds_elapsed;
     model.setTranslation(updated_position.x, updated_position.y, updated_position.z);
 }
