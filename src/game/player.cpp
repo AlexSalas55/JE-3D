@@ -99,32 +99,33 @@ void Player::render(Camera* camera)
     renderFallingSnow(camera);
 
     //debug visualization
-    Shader* debug_shader = Shader::Get("data/shaders/basic.vs", "data/shaders/flat.fs");
-    Mesh* sphere_mesh = Mesh::Get("data/meshes/sphere.obj");
-    Matrix44 m = getGlobalMatrix();
+    //Shader* debug_shader = Shader::Get("data/shaders/basic.vs", "data/shaders/flat.fs");
+    //Mesh* sphere_mesh = Mesh::Get("data/meshes/sphere.obj");
+    // Matrix44 m = getGlobalMatrix();
     
-    if (debug_shader && sphere_mesh)
-    {
-        debug_shader->enable();
-        {
-            m.translate(0.0f, World::get_instance()->player_height, 0.0f);
-            m.scale(World::get_instance()->sphere_radius, World::get_instance()->sphere_radius, World::get_instance()->sphere_radius);
-            debug_shader->setUniform("u_color", Vector4(0.0f, 1.0f, 0.0f, 1.0f));
-            debug_shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
-            debug_shader->setUniform("u_model", m);
-            sphere_mesh->render(GL_LINES);
-        }
-        {
-            m = getGlobalMatrix();
-            m.translate(0.0f, World::get_instance()->sphere_grow, 0.0f);
-            m.scale(World::get_instance()->sphere_grow, World::get_instance()->sphere_grow, World::get_instance()->sphere_grow);
-            debug_shader->setUniform("u_color", Vector4(1.0f, 0.0f, 0.0f, 1.0f));
-            debug_shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
-            debug_shader->setUniform("u_model", m);
-            sphere_mesh->render(GL_LINES);
-        }
-        debug_shader->disable();
-    }
+    
+    // if (debug_shader && sphere_mesh)
+    // {
+    //     debug_shader->enable();
+    //     {
+    //         m.translate(0.0f, World::get_instance()->player_height, 0.0f);
+    //         m.scale(World::get_instance()->sphere_radius, World::get_instance()->sphere_radius, World::get_instance()->sphere_radius);
+    //         debug_shader->setUniform("u_color", Vector4(0.0f, 1.0f, 0.0f, 1.0f));
+    //         debug_shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+    //         debug_shader->setUniform("u_model", m);
+    //         sphere_mesh->render(GL_LINES);
+    //     }
+    //     {
+    //         m = getGlobalMatrix();
+    //         m.translate(0.0f, World::get_instance()->sphere_grow, 0.0f);
+    //         m.scale(World::get_instance()->sphere_grow, World::get_instance()->sphere_grow, World::get_instance()->sphere_grow);
+    //         debug_shader->setUniform("u_color", Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+    //         debug_shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+    //         debug_shader->setUniform("u_model", m);
+    //         sphere_mesh->render(GL_LINES);
+    //     }
+    //     debug_shader->disable();
+    // }
 }
 
 void Player::update(float seconds_elapsed)

@@ -432,13 +432,13 @@ Vector3 World::adjustCameraPosition(const Vector3& target_eye, const Vector3& ta
     
     // check if desired camera position is inside any mesh
     if (isPointInsideMesh(target_eye)) {
-        std::cout << "Camera target position is inside a mesh!" << std::endl;
+        //std::cout << "Camera target position is inside a mesh!" << std::endl;
         
         // perform a raycast from center camera position
         sCollisionData collision = raycast(adjusted_origin, dir, eCollisionFilter::ALL, true, desired_distance);
         
         if (collision.collider) {
-            std::cout << "Camera collision detected! Distance: " << collision.distance << std::endl;
+            //std::cout << "Camera collision detected! Distance: " << collision.distance << std::endl;
             
             // Calculate new distance, with small gap
             float new_distance = collision.distance * 0.85f;
@@ -452,7 +452,7 @@ Vector3 World::adjustCameraPosition(const Vector3& target_eye, const Vector3& ta
                         
             // check if new position is inside any mesh
             if (isPointInsideMesh(adjusted_eye)) {
-                std::cout << "Camera still inside mesh after adjustment!" << std::endl;
+                //std::cout << "Camera still inside mesh after adjustment!" << std::endl;
                 
                 // try different distances and elevations until a valid position is found
                 for (float factor = 0.7f; factor >= 0.1f; factor -= 0.1f) {
@@ -463,7 +463,7 @@ Vector3 World::adjustCameraPosition(const Vector3& target_eye, const Vector3& ta
                     adjusted_eye = adjusted_origin + dir * new_distance + higher_offset;
                     
                     if (!isPointInsideMesh(adjusted_eye)) {
-                        std::cout << "Found valid camera position at factor: " << factor << std::endl;
+                        //std::cout << "Found valid camera position at factor: " << factor << std::endl;
                         return adjusted_eye;
                     }
                 }
@@ -494,7 +494,7 @@ bool World::isPointInsideMesh(const Vector3& point, float radius) {
     
     // if there are collisions, the point is inside a mesh
     if (!collisions.empty()) {
-        std::cout << "Point is inside mesh! Collisions: " << collisions.size() << std::endl;
+        //std::cout << "Point is inside mesh! Collisions: " << collisions.size() << std::endl;
         return true;
     }
     
