@@ -12,16 +12,9 @@ public:
 	int layer = eCollisionFilter::ALL;
 
 	EntityCollider() {};
-	/*
-	EntityCollider(Mesh* mesh, const Material& material, const std::string& name) :
-		EntityMesh(mesh, material, name) {
-	}
-	*/
 	EntityCollider(Mesh* mesh, const Material& material) :
 		EntityMesh(mesh, material) {
 	};
-	
-	//~EntityCollider() {};
 
 	void getCollisions(const Vector3& target_position, std::vector<sCollisionData>& collisions, std::vector<sCollisionData>& ground_collisions, eCollisionFilter filter);
 

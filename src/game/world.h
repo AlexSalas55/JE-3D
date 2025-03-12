@@ -24,9 +24,9 @@ public:
 	
     Entity* root = nullptr;
     EntityMesh* skybox = nullptr;
-    EntityMesh* skybox2 = nullptr;  // Second skybox for player 2
+    EntityMesh* skybox2 = nullptr;  // second skybox for player 2
     Player* player = nullptr;
-    Player* player2 = nullptr;  // Second player for multiplayer
+    Player* player2 = nullptr;  // second player for multiplayer
     Camera* camera;      // 3D camera for player 1
     Camera* camera2D;    // 2D camera for UI
     Vector3 eye;
@@ -54,7 +54,7 @@ public:
     float sphere_grow = .3f;
     float player_height = 1.5f;
 
-    // Variables para almacenar la posición de la cámara
+    // variables to store camera position
     Vector3 camera_stored_eye;
     Vector3 camera_stored_center;
     Vector3 camera_stored_up;
@@ -63,10 +63,10 @@ public:
     Shader* phong_shader;
     Vector3 light_position;
     Vector3 light_color;
-    Vector3 light2_position;  // Second light position
-    Vector3 light2_color;     // Second light color
+    Vector3 light2_position;  // second light position
+    Vector3 light2_color;     // second light color
 
-    bool is_training_stage = true;  // Por defecto, asumimos que estamos en entrenamiento
+    bool is_training_stage = true;  // by default, we assume we are in training stage
 
     void render();
     void update(double seconds_elapsed);
@@ -84,6 +84,6 @@ public:
     Vector3 adjustCameraPosition(const Vector3& target_eye, const Vector3& target_center, float min_distance = 0.5f);
     bool isPointInsideMesh(const Vector3& point, float radius = 0.1f);
     
-    // Método para cambiar entre escenario de entrenamiento y juego
+    // method to change between training stage and game
     void setTrainingStage(bool is_training) { is_training_stage = is_training; }
 };

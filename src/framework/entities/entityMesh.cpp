@@ -12,19 +12,10 @@ EntityMesh::EntityMesh(Mesh* mesh, const Material& material)
 }
 
 EntityMesh::~EntityMesh() {
-	// Libera recursos si fuese necesario
 }
 
 void EntityMesh::render(Camera* camera)
 {
-	/*
-	if (!mesh) {
-		assert(0);
-		return;
-	}
-	if (!material.shader) {
-		material.shader = Shader::Get("data/shaders/basic.vs", "data/shaders/flat.fs");
-	}*/
 
 	camera->enable();
 
@@ -65,14 +56,13 @@ void EntityMesh::render(Camera* camera)
 	// Disable shader
 	material.shader->disable();
 
-	// Propaga la llamada a render a los hijos invocando el método de la clase base
+	// propagate the call to render to the children using the base class method
 	Entity::render(camera);
 }
 
 void EntityMesh::update(float delta_time)
 {
-	// Aquí se puede actualizar la lógica específica de EntityMesh
 
-	// Propaga la llamada a update a los hijos mediante el método de la clase base
+	// propagate the call to update to the children using the base class method
 	Entity::update(delta_time);
 }

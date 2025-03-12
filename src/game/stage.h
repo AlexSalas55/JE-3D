@@ -15,9 +15,9 @@ enum : uint8_t {
 
 class Stage {
 public:
-    virtual void render() {}; // Empty body
-    virtual void init() {}; // Empty body
-    virtual void update(double seconds_elapsed) {}; // Empty body
+    virtual void render() {};
+    virtual void init() {}; 
+    virtual void update(double seconds_elapsed) {};
 
     // Add callbacks for each stage to be
     virtual void onEnter(Stage* prev_stage) {};
@@ -50,20 +50,20 @@ private:
     EntityMesh* training_button;
     EntityMesh* exit_button;
 
-    // Texturas normales
+    // normal textures
     Texture* play_normal;
     Texture* training_normal;
     Texture* exit_normal;
     Texture* multiplayer_normal;
     
 
-    // Texturas hover
+    // hover textures
     Texture* play_hover_tex;
     Texture* multiplayer_hover_tex;
     Texture* training_hover_tex;
     Texture* exit_hover_tex;
 
-    // Canal de audio para la música del menú
+    // audio channel for menu music
     HCHANNEL menu_music_channel;
 };
 
@@ -79,17 +79,17 @@ public:
     void restart();
 
 private:
-    HCHANNEL play_music_channel;    // Canal de audio para la música del modo de juego
-    double chronometer1 = 0.0;  // Timer for player 1
-    double chronometer2 = 0.0;  // Timer for player 2
-    double checkpoint1_time = 0.0;  // Checkpoint time for player 1
-    double checkpoint2_time = 0.0;  // Checkpoint time for player 2
-    bool timer1_active = false; // Track if player 1's timer is running
-    bool timer2_active = false; // Track if player 2's timer is running
-    bool player1_finished = false; // Track if player 1 has finished
-    bool player2_finished = false; // Track if player 2 has finished
-    bool player1_checkpoint = false; // Track if player 1 passed checkpoint
-    bool player2_checkpoint = false; // Track if player 2 passed checkpoint
+    HCHANNEL play_music_channel;    // audio channel for game music
+    double chronometer1 = 0.0;
+    double chronometer2 = 0.0;
+    double checkpoint1_time = 0.0;
+    double checkpoint2_time = 0.0;
+    bool timer1_active = false;
+    bool timer2_active = false;
+    bool player1_finished = false;
+    bool player2_finished = false;
+    bool player1_checkpoint = false;
+    bool player2_checkpoint = false;
     
     // End game UI state
     bool show_end_screen = false;
@@ -114,9 +114,9 @@ public:
     void restart();
 
 private:
-    HCHANNEL training_music_channel = 0;    // Canal de audio para la música del modo de entrenamiento
-    bool show_tutorial = true; // Flag to show/hide tutorial image
+    HCHANNEL training_music_channel = 0;    // audio channel for training music
+    bool show_tutorial = true; // flag to show/hide tutorial image
     
-    // Tutorial UI elements
+    // tutorial UI elements
     EntityMesh* tutorial_background = nullptr;
 }; 

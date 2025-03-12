@@ -14,7 +14,6 @@ class EntityMesh : public Entity {
 public:
     EntityMesh() : mesh(nullptr) {}
     EntityMesh(Mesh* mesh, const Material& material);
-    //EntityMesh(Mesh* mesh, const Material& material, const std::string& name = "");
 
     virtual ~EntityMesh();
 
@@ -26,7 +25,7 @@ public:
     Animator animator;
     bool isAnimated = false;
 
-    // Miembros agregados para el renderizado instanciado
+    // members added for instanced rendering
     bool isInstanced = false;
     std::vector<Matrix44> models;
 
