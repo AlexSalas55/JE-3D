@@ -28,8 +28,9 @@ public:
     virtual void onMouseButtonUp(SDL_MouseButtonEvent event) {};
     virtual void onMouseMove(SDL_MouseMotionEvent event) {};
     virtual void onMouseWheel(SDL_MouseWheelEvent event) {};
-    virtual void onGamepadButtonDown(SDL_JoyButtonEvent event) {};
-    virtual void onGamepadButtonUp(SDL_JoyButtonEvent event) {};
+    virtual void onGamepadButtonDown(SDL_ControllerButtonEvent event) {};
+    virtual void onGamepadButtonUp(SDL_ControllerButtonEvent event) {};
+    virtual void onGamepadAxisMotion(SDL_ControllerAxisEvent event) {};
     virtual void onResize(int width, int height) {};
 };
 

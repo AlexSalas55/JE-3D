@@ -61,11 +61,11 @@ bool SceneParser::parse(const char* filename, Entity* root)
 		material.color = Vector4(1, 1, 1, 1);
 		
 		// Intentar cargar la textura del colormap si existe
-		std::string texture_path = mesh_name.substr(0, mesh_name.find_last_of(".")) + "/colormap.png";
-		Texture* tex = Texture::Get(texture_path.c_str());
-		if (tex) {
-			material.diffuse = tex;
-		}
+		//std::string texture_path = mesh_name.substr(0, mesh_name.find_last_of(".")) + "/colormap.png";
+		//Texture* tex = Texture::Get(texture_path.c_str());
+		//if (tex) {
+		//	material.diffuse = tex;
+		//}
 		
 		EntityMesh* new_entity = nullptr;
 

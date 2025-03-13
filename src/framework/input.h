@@ -92,12 +92,15 @@ public:
 	static bool isButtonPressed(int button, int pad = 0) { return gamepads[pad].isButtonPressed(button); }
 	static bool wasButtonPressed(int button, int pad = 0) { return gamepads[pad].wasButtonPressed(button); }
 
+	// Vibration control (0-1 range for intensity)
+	static void setGamepadVibration(float low_freq_intensity, float high_freq_intensity, Uint32 duration_ms, int pad = 0);
+
 	//mouse
 	static bool isMousePressed(int button) { return mouse_state & SDL_BUTTON(button); } //button could be SDL_BUTTON_LEFT
 	static bool wasMousePressed(int button) { return (mouse_state & SDL_BUTTON(button)) && !(prev_mouse_state & SDL_BUTTON(button)); } //button could be SDL_BUTTON_LEFT
 	static void init( SDL_Window* window );
 	static void update();
 
-	static SDL_Joystick* openGamepad(int index);
-	static void updateGamepadState(SDL_Joystick* joystick, GamepadState& state);
+	static SDL_GameController* openGamepad(int index);
+	static void updateGamepadState(SDL_GameController* controller, GamepadState& state);
 };

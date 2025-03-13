@@ -248,19 +248,25 @@ void World::update(double seconds_elapsed) {
         player->update(seconds_elapsed);
         
         if (Game::instance->multiplayer_enabled && player2) {
-            // Handle Player 2 controls (H and K for camera rotation)
-            if (Input::isKeyPressed(SDL_SCANCODE_LEFT))
+            // Handle Player 2 controls - both keyboard and gamepad
+            // Keyboard controls (left/right for camera)
+            if (Input::isKeyPressed(SDL_SCANCODE_LEFT) || 
+                (Input::gamepads[1].connected && Input::gamepads[1].axis[RIGHT_ANALOG_X] < -0.3f))
                 camera2_yaw -= seconds_elapsed * rotation_speed;
-            if (Input::isKeyPressed(SDL_SCANCODE_RIGHT))
+            if (Input::isKeyPressed(SDL_SCANCODE_RIGHT) || 
+                (Input::gamepads[1].connected && Input::gamepads[1].axis[RIGHT_ANALOG_X] > 0.3f))
                 camera2_yaw += seconds_elapsed * rotation_speed;
+            
             // Update Player 2
             player2->update(seconds_elapsed);
         }
 
         // player 1 camera controls with arrow keys
-        if (Input::isKeyPressed(SDL_SCANCODE_A))
+        if (Input::isKeyPressed(SDL_SCANCODE_A) || 
+            (Input::gamepads[0].connected && Input::gamepads[0].axis[RIGHT_ANALOG_X] < -0.3f))
             camera_yaw -= seconds_elapsed * rotation_speed;
-        if (Input::isKeyPressed(SDL_SCANCODE_D))
+        if (Input::isKeyPressed(SDL_SCANCODE_D) || 
+            (Input::gamepads[0].connected && Input::gamepads[0].axis[RIGHT_ANALOG_X] > 0.3f))
             camera_yaw += seconds_elapsed * rotation_speed;
 
         // keep pitch within limits

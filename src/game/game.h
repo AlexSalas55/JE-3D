@@ -53,7 +53,8 @@ public:
 	void onMouseButtonDown( SDL_MouseButtonEvent event );
 	void onMouseButtonUp(SDL_MouseButtonEvent event);
 	void onMouseWheel(SDL_MouseWheelEvent event);
-	void onGamepadButtonDown(SDL_JoyButtonEvent event);
-	void onGamepadButtonUp(SDL_JoyButtonEvent event);
+	void onGamepadButtonDown(SDL_ControllerButtonEvent event);
+	void onGamepadButtonUp(SDL_ControllerButtonEvent event);
+	void onGamepadAxisMotion(SDL_ControllerAxisEvent event);
 	void onResize(int width, int height);
 };

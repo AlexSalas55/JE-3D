@@ -8,6 +8,7 @@
 #include "graphics/material.h"
 #include "graphics/texture.h"
 #include "graphics/shader.h"
+#include "framework/input.h"
 
 void PlayStage::init() {
     // instance world if not initialized
@@ -42,7 +43,7 @@ void PlayStage::restart() {
 
 
     // reset player positions
-    Vector3 start_pos(345.0f, 184.0f, 37.0f);
+    Vector3 start_pos(345.0f, 164.0f, 37.0f);
     if (world->player) {
         world->player->model.setTranslation(start_pos.x, start_pos.y, start_pos.z);
         world->player->setRecoveryPosition(start_pos);

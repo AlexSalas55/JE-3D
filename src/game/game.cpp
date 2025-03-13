@@ -199,17 +199,34 @@ void Game::onMouseWheel(SDL_MouseWheelEvent event)
 	}
 }
 
-void Game::onGamepadButtonDown(SDL_JoyButtonEvent event)
+void Game::onGamepadButtonDown(SDL_ControllerButtonEvent event)
 {
 	if (current_stage) {
 		current_stage->onGamepadButtonDown(event);
 	}
 }
 
-void Game::onGamepadButtonUp(SDL_JoyButtonEvent event)
+void Game::onGamepadButtonUp(SDL_ControllerButtonEvent event)
 {
 	if (current_stage) {
 		current_stage->onGamepadButtonUp(event);
+	}
+}
+
+void Game::onGamepadAxisMotion(SDL_ControllerAxisEvent event)
+{
+	// Handle axis motion directly here since it's time-critical
+	if (event.which == 1) { // Player 2's controller
+		switch(event.axis) {
+			case SDL_CONTROLLER_AXIS_LEFTY:
+				// Left stick Y axis controls acceleration/deceleration
+				Input::gamepads[1].axis[LEFT_ANALOG_Y] = event.value / 32768.0f;
+				break;
+			case SDL_CONTROLLER_AXIS_RIGHTX:
+				// Right stick X axis controls turning
+				Input::gamepads[1].axis[RIGHT_ANALOG_X] = event.value / 32768.0f;
+				break;
+		}
 	}
 }
 

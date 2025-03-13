@@ -49,6 +49,27 @@ SDL_Window* createWindow(const char* caption, int width, int height, bool fullsc
 	// Initialize the joystick subsystem
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 
+	// Initialize game controller support
+	SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+
+	// Debug: Print number of joysticks/controllers
+	int numJoysticks = SDL_NumJoysticks();
+	std::cout << "Number of joysticks/controllers detected: " << numJoysticks << std::endl;
+
+	// Try to open and print info for each controller
+	for (int i = 0; i < numJoysticks; i++) {
+		if (SDL_IsGameController(i)) {
+			SDL_GameController* controller = SDL_GameControllerOpen(i);
+			if (controller) {
+				std::cout << "Controller " << i << " connected: " << SDL_GameControllerName(controller) << std::endl;
+			} else {
+				std::cout << "Could not open controller " << i << ": " << SDL_GetError() << std::endl;
+			}
+		} else {
+			std::cout << "Joystick " << i << " is not a game controller" << std::endl;
+		}
+	}
+
 	//create the window
 	// Ensure minimum window size
 	width = std::max(width, 1280);
@@ -130,11 +151,28 @@ void mainLoop()
 			case SDL_KEYUP:
 				game->onKeyUp(sdlEvent.key);
 				break;
-			case SDL_JOYBUTTONDOWN:
-				game->onGamepadButtonDown(sdlEvent.jbutton);
+			case SDL_CONTROLLERAXISMOTION:
+				game->onGamepadAxisMotion(sdlEvent.caxis);
 				break;
-			case SDL_JOYBUTTONUP:
-				game->onGamepadButtonUp(sdlEvent.jbutton);
+			case SDL_CONTROLLERBUTTONDOWN:
+				game->onGamepadButtonDown(sdlEvent.cbutton);
+				break;
+			case SDL_CONTROLLERBUTTONUP:
+				game->onGamepadButtonUp(sdlEvent.cbutton);
+				break;
+			case SDL_CONTROLLERDEVICEADDED:
+				{
+					int which = sdlEvent.cdevice.which;
+					if (SDL_IsGameController(which)) {
+						SDL_GameController* controller = SDL_GameControllerOpen(which);
+						if (controller) {
+							std::cout << "Controller " << which << " connected: " << SDL_GameControllerName(controller) << std::endl;
+						}
+					}
+				}
+				break;
+			case SDL_CONTROLLERDEVICEREMOVED:
+				std::cout << "Controller " << sdlEvent.cdevice.which << " disconnected" << std::endl;
 				break;
 			case SDL_TEXTINPUT:
 				// you can read the ASCII character from sdlEvent.text.text 
@@ -188,6 +226,27 @@ int main(int argc, char **argv)
 
 	//prepare SDL
 	SDL_Init(SDL_INIT_EVERYTHING);
+
+	// Initialize game controller support
+	SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+
+	// Debug: Print number of joysticks/controllers
+	int numJoysticks = SDL_NumJoysticks();
+	std::cout << "Number of joysticks/controllers detected: " << numJoysticks << std::endl;
+
+	// Try to open and print info for each controller
+	for (int i = 0; i < numJoysticks; i++) {
+		if (SDL_IsGameController(i)) {
+			SDL_GameController* controller = SDL_GameControllerOpen(i);
+			if (controller) {
+				std::cout << "Controller " << i << " connected: " << SDL_GameControllerName(controller) << std::endl;
+			} else {
+				std::cout << "Could not open controller " << i << ": " << SDL_GetError() << std::endl;
+			}
+		} else {
+			std::cout << "Joystick " << i << " is not a game controller" << std::endl;
+		}
+	}
 
 	bool fullscreen = false; //change this to go fullscreen
 	Vector2 size(1280,720);

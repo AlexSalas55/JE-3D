@@ -258,9 +258,16 @@ void Player::update(float seconds_elapsed)
         Vector3 move_direction(0.0f);
         //movement controls for each player
         if (this == World::get_instance()->player2) {
-            if (Input::isKeyPressed(SDL_SCANCODE_UP)) move_direction.z = 1.0f;
+            // Player 2 controls - both keyboard and gamepad
+            if (Input::isKeyPressed(SDL_SCANCODE_UP) || 
+                (Input::gamepads[1].connected && Input::gamepads[1].axis[LEFT_ANALOG_Y] < -0.3f)) {
+                move_direction.z = 1.0f;
+            }
         } else {
-            if (Input::isKeyPressed(SDL_SCANCODE_W)) move_direction.z = 1.0f;
+            if (Input::isKeyPressed(SDL_SCANCODE_W) || 
+                (Input::gamepads[0].connected && Input::gamepads[0].axis[LEFT_ANALOG_Y] < -0.3f)) {
+                move_direction.z = 1.0f;
+            }
         }
 
         if (move_direction.length() > 0.01f) {
@@ -498,12 +505,14 @@ void Player::update(float seconds_elapsed)
             
             //check if this is player2 and handle its controls
             if (this == World::get_instance()->player2) {
-                if (Input::isKeyPressed(SDL_SCANCODE_UP)) {
+                if (Input::isKeyPressed(SDL_SCANCODE_UP) || 
+                    (Input::gamepads[1].connected && Input::gamepads[1].axis[LEFT_ANALOG_Y] < -0.3f)) {
                     if (animation_state != eAnimationState::IMPULSE) {
                         animator.playAnimation("data/meshes/animations/impulse.skanim");
                         animation_state = eAnimationState::IMPULSE;
                     }
-                } else if (Input::isKeyPressed(SDL_SCANCODE_DOWN)) {
+                } else if (Input::isKeyPressed(SDL_SCANCODE_DOWN) || 
+                          (Input::gamepads[1].connected && Input::gamepads[1].axis[LEFT_ANALOG_Y] > 0.3f)) {
                     if (animation_state != eAnimationState::BRAKE) {
                         animator.playAnimation("data/meshes/animations/brake.skanim");
                         animation_state = eAnimationState::BRAKE;
@@ -522,10 +531,12 @@ void Player::update(float seconds_elapsed)
                     }
                     
                     //braking physics
-                    float brake_force = 3.0f * base_deceleration;
+                    float brake_force = 3.0f * base_deceleration; //stronger than base deceleration
                     current_speed *= (1.0f - brake_force * seconds_elapsed);
+                    //no negative speed from braking
                     if (current_speed < 0.1f)
                         current_speed = 0.0f;
+                    //update velocity to match new speed
                     if (velocity.length() > 0) {
                         velocity = velocity.normalize() * current_speed;
                     }
@@ -542,12 +553,14 @@ void Player::update(float seconds_elapsed)
                     }
                 }
             } else { //player 1 controls
-                if (Input::isKeyPressed(SDL_SCANCODE_W)) {
+                if (Input::isKeyPressed(SDL_SCANCODE_W) || 
+                    (Input::gamepads[0].connected && Input::gamepads[0].axis[LEFT_ANALOG_Y] < -0.3f)) {
                     if (animation_state != eAnimationState::IMPULSE) {
                         animator.playAnimation("data/meshes/animations/impulse.skanim");
                         animation_state = eAnimationState::IMPULSE;
                     }
-                } else if (Input::isKeyPressed(SDL_SCANCODE_S)) {
+                } else if (Input::isKeyPressed(SDL_SCANCODE_S) || 
+                          (Input::gamepads[0].connected && Input::gamepads[0].axis[LEFT_ANALOG_Y] > 0.3f)) {
                     if (animation_state != eAnimationState::BRAKE) {
                         animator.playAnimation("data/meshes/animations/brake.skanim");
                         animation_state = eAnimationState::BRAKE;
@@ -644,10 +657,27 @@ void Player::update(float seconds_elapsed)
             Audio::Stop(brake_sound_channel);
             is_brake_sound_playing = false;
         }
-        if (Input::isKeyPressed(SDL_SCANCODE_SPACE)) {
+        //vibration controller index
+        if (this == World::get_instance()->player2 && Input::gamepads[1].connected && !is_grounded) {
+            Input::setGamepadVibration(0.15f, 0.28f, 0, 1); // For player 2 (controller index 1)
+        } else if (Input::gamepads[0].connected && !is_grounded) {
+            Input::setGamepadVibration(0.15f, 0.28f, 0, 0); // For player 1 (controller index 0)
+        }
+    }
+
+    if (!is_grounded) {
+        if (Input::isKeyPressed(SDL_SCANCODE_SPACE) 
+        || Input::gamepads[0].connected && Input::gamepads[0].button[A_BUTTON]
+        || Input::gamepads[1].connected && Input::gamepads[1].button[A_BUTTON]) {
             model.rotate(velocity.length() * 0.2f, Vector3(0, 1, 0));
         }
     }
+    if (is_grounded) {
+        //Stop vibration when the player lands
+        Input::setGamepadVibration(0.0f, 0.0f, 0, 0); // Stop for player 1
+        Input::setGamepadVibration(0.0f, 0.0f, 0, 1); // Stop for player 2
+    }
+
 
     //animations
     animator.update(seconds_elapsed);
@@ -692,7 +722,11 @@ void Player::updateCameraPitch(float target_angle) {
 
 void Player::handleUphillMovement(float seconds_elapsed, float slope_factor) {
     bool is_player2 = (this == World::get_instance()->player2);
-    bool is_moving_forward = is_player2 ? Input::isKeyPressed(SDL_SCANCODE_UP) : Input::isKeyPressed(SDL_SCANCODE_W);
+    bool is_moving_forward = is_player2 ? 
+        (Input::isKeyPressed(SDL_SCANCODE_UP) || 
+         (Input::gamepads[1].connected && Input::gamepads[1].axis[LEFT_ANALOG_Y] < -0.3f)) : 
+        (Input::isKeyPressed(SDL_SCANCODE_W) || 
+         (Input::gamepads[0].connected && Input::gamepads[0].axis[LEFT_ANALOG_Y] < -0.3f));
     
     //get player forward dir and slope
     Vector3 player_forward = model.frontVector().normalize();
@@ -776,8 +810,24 @@ void Player::testCollisions(const Vector3& target_position, float seconds_elapse
                 collision_count++;
                 last_collision_time = current_time;
 
+                //if collision_count >10 vibrate controller if is connected, vibrate the controller of the player that is colliding
+                if (collision_count >= 2 && (Input::gamepads[0].connected || Input::gamepads[1].connected)) {
+                    if (this == World::get_instance()->player2) {
+                        Input::setGamepadVibration(0.6f, 0.78f, 0, 1); // For player 2 (controller index 1)
+                    } else {
+                        Input::setGamepadVibration(0.6f, 0.78f, 0, 0); // For player 1 (controller index 0)
+                    }
+                } //ifcollission_count lower than 10, stop the vibration
+                else if (collision_count < 1 && (Input::gamepads[0].connected || Input::gamepads[1].connected)) {
+                    if (this == World::get_instance()->player2) {
+                        Input::setGamepadVibration(0.0f, 0.0f, 0, 1); // For player 2 (controller index 1)
+                    } else {
+                        Input::setGamepadVibration(0.0f, 0.0f, 0, 0); // For player 1 (controller index 0)
+                    }
+                }
+
                 //check if we need to recover position
-                if (collision_count >= 500 && current_time - last_collision_time <= 3.0) {
+                if (collision_count >= 300 && current_time - last_collision_time <= 3.0) {
                     //reset collision tracking
                     collision_count = 0;
                     last_collision_time = 0.0;
